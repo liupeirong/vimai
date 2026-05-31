@@ -1,0 +1,37 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-sort-imports
+        name: ruff sort imports
+        entry: uv run ruff check --select I --fix
+        require_serial: true
+        language: system
+        types_or: [python, pyi, jupyter]
+        exclude: ''
+      - id: ruff-format
+        name: ruff format
+        entry: uv run ruff format
+        language: system
+        require_serial: true
+        types_or: [python, pyi, jupyter]
+        exclude: ''
+      - id: ruff-lint
+        name: ruff lint
+        entry: uv run ruff check --force-exclude
+        language: system
+        types_or: [python, pyi, jupyter]
+        require_serial: true
+        exclude: ''
+      - id: trufflehog
+        name: TruffleHog
+        description: TruffleHog secret scanning
+        entry: trufflehog git file://. --since-commit HEAD --only-verified --fail
+        language: system
+        stages: [pre-commit]
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v4.9.1
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]

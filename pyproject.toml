@@ -1,7 +1,17 @@
 [project]
 name = "vimai"
 version = "0.1.0"
-description = "Add your description here"
+description = "A plugin that lets you query LLM inside vim"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "azure-identity>=1.25.3",
+]
+
+[dependency-groups]
+dev = [
+    "commitizen>=4.16.3",
+    "pre-commit>=4.6.0",
+    "pytest>=9.0.3",
+    "ruff>=0.15.15",
+]
