@@ -4,13 +4,11 @@ You are working in a repository designed for long-running implementation work.
 Prioritize reliable completion, continuity across sessions, and explicit
 verification over speed.
 
-## Operating Loop
-
-At the start of every session:
+## Before You Begin Implementing Features
 
 1. Run `pwd` and confirm you are in the expected repository root.
-2. Read `claude_progress.md`.
-3. Read `feature_list.json`.
+2. Read `claude-progress.md`.
+3. Read `feature-list.json`.
 4. Review recent commits with `git log --oneline -5`.
 5. Install or sync dependencies with `uv sync`.
 6. Check if tests are already broken with `pytest`.
@@ -26,12 +24,6 @@ you either verify it or document why it is blocked.
 - Do not remove or weaken tests just to make the task look complete.
 - Use repository artifacts as the system of record.
 
-## Required Files
-
-- `feature_list.json`
-- `claude_progress.md`
-- `init.sh`
-
 ## Completion Gate
 
 A feature can move to `passing` only after the required verification succeeds
@@ -39,8 +31,10 @@ and the result is recorded.
 
 ## Before You Stop
 
-1. Update the progress log.
-2. Update the feature state.
-3. Record what is still broken or unverified.
-4. Commit once the repository is safe to resume.
-5. Leave a clean restart path for the next session.
+1. Update progress log in `claude-progress.md` by recording:
+    - current feature state,
+    - new decisions made,
+    - what is verified, unverified, or broken
+    - any unresolved risk
+2. Check `clean-state-checklist.md` to leave the repo in a clean state for the next session.
+3. Commit once the repository is clean and safe to resume.
