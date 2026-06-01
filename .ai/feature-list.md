@@ -56,14 +56,22 @@ interface feature_list {
       "area": "vim plugin",
       "title": "Inline LLM query via :AI command",
       "user_visible_behavior": "User runs ':AI <prompt>' in Vim. Response prints in the command window like ':!ls'.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "':AI hello' prints an LLM response to the Vim command window",
         "cabbrev maps ':ai' to ':AI'",
         "main.py exits 0 on success, 1 on error"
       ],
-      "evidence": [],
-      "notes": "Uses :! shell integration. python main.py '<prompt>' called by Vim."
+      "evidence": [
+        "src/vimai/chain.py: invoke_chain(config, prompt) -> str using AzureChatOpenAI + HumanMessage",
+        "src/vimai/cli.py: main() parses argv[1], calls load_config()+invoke_chain(), prints response, exits 0/1",
+        "main.py: updated to delegate to cli.main()",
+        "plugin/vimai.vim: :AI command + cabbrev ai AI; resolves main.py path relative to plugin file",
+        "tests/test_chain.py: 5 unit tests with mocked build_llm (returns str, sends HumanMessage, propagates exceptions, coerces content)",
+        "tests/test_cli.py: 6 unit tests covering exit codes, stdout output, config errors, LLM errors, no-args, blank prompt",
+        "pytest: 28/28 passed; ruff format + check: clean"
+      ],
+      "notes": "Uses :! shell integration. python main.py '<prompt>' called by Vim. Session history deferred to F03."
     },
     {
       "id": "F02",
