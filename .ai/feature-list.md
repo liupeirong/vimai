@@ -24,7 +24,7 @@ interface feature_list {
 
 ```json
 {
-  "last_updated": "2026-06-01 10:04",
+  "last_updated": "2026-06-01 13:45",
   "feature": [
     {
       "id": "infra-001",
@@ -49,6 +49,149 @@ interface feature_list {
         "Completion gate explicitly references evidence field in feature-list.md"
       ],
       "notes": "ARCHITECTURE.md section headings are intentional placeholders; content will be filled collaboratively before feature implementation begins."
+    },
+    {
+      "id": "F01",
+      "priority": 1,
+      "area": "vim plugin",
+      "title": "Inline LLM query via :AI command",
+      "user_visible_behavior": "User runs ':AI <prompt>' in Vim. Response prints in the command window like ':!ls'.",
+      "status": "not_started",
+      "verification": [
+        "':AI hello' prints an LLM response to the Vim command window",
+        "cabbrev maps ':ai' to ':AI'",
+        "main.py exits 0 on success, 1 on error"
+      ],
+      "evidence": [],
+      "notes": "Uses :! shell integration. python main.py '<prompt>' called by Vim."
+    },
+    {
+      "id": "F02",
+      "priority": 2,
+      "area": "vim plugin",
+      "title": "Multi-line prompt via scratch buffer",
+      "user_visible_behavior": "User opens a scratch buffer, types multi-line prompt, presses <leader>s to submit.",
+      "status": "not_started",
+      "verification": [
+        "Scratch buffer opens via a keymap",
+        "<leader>s in scratch buffer submits content and displays response",
+        "Buffer is wiped after submission"
+      ],
+      "evidence": [],
+      "notes": "Buffer-local <leader>s mapping. Does not leak to other buffers."
+    },
+    {
+      "id": "F03",
+      "priority": 1,
+      "area": "memory management",
+      "title": "Session management",
+      "user_visible_behavior": "Conversation history is persisted per session in a JSON tmp file. History is sent to LLM on each turn.",
+      "status": "not_started",
+      "verification": [
+        "Session file created on first prompt: vimai-session-yyyy-mm-dd-hh-mm-<pid>.tmp in Vim tmpdir",
+        "Each entry: {role, content, timestamp}",
+        "History passed to LLM on subsequent prompts in same session",
+        "Session file saved on Vim exit if non-empty"
+      ],
+      "evidence": [],
+      "notes": "File stored in $TMPDIR or system tmp. PID in name avoids multi-instance collisions."
+    },
+    {
+      "id": "F04",
+      "priority": 2,
+      "area": "vim plugin",
+      "title": "Session control: /clear, /purge, /help",
+      "user_visible_behavior": "':AI /clear' ends session. ':AI /purge' deletes all session files. ':AI /help' lists commands.",
+      "status": "not_started",
+      "verification": [
+        "':AI /clear' closes active session and prints confirmation",
+        "':AI /purge' deletes all vimai-session-*.tmp files and prints count",
+        "':AI /help' prints all commands with descriptions",
+        "Unknown /command prints error referencing /help"
+      ],
+      "evidence": [],
+      "notes": "Slash-prefix subcommand pattern keeps :AI as the single Vim command."
+    },
+    {
+      "id": "F05",
+      "priority": 1,
+      "area": "llm integration",
+      "title": "Azure OpenAI + Entra ID authentication",
+      "user_visible_behavior": "Plugin connects to Azure OpenAI using Entra ID. No API key required.",
+      "status": "not_started",
+      "verification": [
+        "Auth uses DefaultAzureCredential (az login, managed identity, etc.)",
+        "Required env vars: AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_DEPLOYMENT",
+        "Optional: AZURE_OPENAI_API_VERSION",
+        "Missing required vars produce a clear error message",
+        "No secrets in source code"
+      ],
+      "evidence": [],
+      "notes": "azure-identity already in pyproject.toml. Add langchain-openai."
+    },
+    {
+      "id": "F06",
+      "priority": 3,
+      "area": "observability",
+      "title": "LangSmith tracing (optional)",
+      "user_visible_behavior": "When LANGCHAIN_TRACING_V2 and LANGSMITH_API_KEY are set, calls are traced in LangSmith.",
+      "status": "not_started",
+      "verification": [
+        "Traces appear in LangSmith when vars are set",
+        "Plugin works normally when vars are absent"
+      ],
+      "evidence": [],
+      "notes": "LangSmith tracing is automatic via LangChain when env vars are present."
+    },
+    {
+      "id": "F07",
+      "priority": 2,
+      "area": "agents",
+      "title": "Generic agent loader from system prompt file",
+      "user_visible_behavior": "Agents are defined as plain Markdown system prompt files in ~/.vimai/agents/<name>.md. The plugin ships a built-in vi.md. Users can author their own or copy definitions from Claude, Copilot, Codex, etc.",
+      "status": "not_started",
+      "verification": [
+        "Agent loader reads ~/.vimai/agents/<name>.md as system prompt",
+        "Built-in vi.md ships with the plugin (Vim expert system prompt)",
+        "If ~/.vimai/agents/<name>.md exists it overrides the built-in",
+        "Missing agent file produces a clear error: 'No agent found for @<name>. Create ~/.vimai/agents/<name>.md'",
+        "Agent loader unit-testable with mocked LLM and temp file fixtures"
+      ],
+      "evidence": [],
+      "notes": "No hardcoded agent logic in Python. The Claude/Copilot/Codex reuse story is: copy their .instructions.md or SKILL.md into ~/.vimai/agents/. Future milestone will formalize that import flow."
+    },
+    {
+      "id": "F08",
+      "priority": 2,
+      "area": "vim plugin",
+      "title": "Route prompt to named agent via :AI @<name>",
+      "user_visible_behavior": "':AI @vi <prompt>' loads the vi agent and answers inline. ':AI @git <prompt>' loads a git agent, etc. Stateless single-turn, does not modify the current session.",
+      "status": "not_started",
+      "verification": [
+        "':AI @vi <prompt>' loads vi.md system prompt and returns response",
+        "':AI @<name> <prompt>' works for any agent file in ~/.vimai/agents/",
+        "Response shown in command window",
+        "Active session is not modified",
+        "':AI @<name>' with no prompt prints usage hint"
+      ],
+      "evidence": [],
+      "notes": "Single-turn stateless. @<name> pattern is the extension point for future agent ecosystem integration."
+    },
+    {
+      "id": "F09",
+      "priority": 1,
+      "area": "engineering",
+      "title": "Unit and integration test suite",
+      "user_visible_behavior": "Developer can run 'pytest' and verify all logic without Azure credentials.",
+      "status": "not_started",
+      "verification": [
+        "Unit tests cover: config validation, session CRUD, /clear /purge /help, @vi routing, error handling",
+        "pytest-mock used to mock LangChain and Azure credentials",
+        "E2E tests marked @pytest.mark.e2e, skipped unless RUN_E2E=1",
+        "'pytest' passes with no credentials"
+      ],
+      "evidence": [],
+      "notes": "Tests written alongside each feature."
     }
   ]
 }
