@@ -7,14 +7,15 @@ verification over speed.
 ## Before You Begin Implementing Features
 
 1. Run `pwd` and confirm you are in the expected repository root.
-2. Read `claude-progress.md`.
-3. Read `feature-list.json`.
+2. Read `.ai/claude-progress.md`.
+3. Read `.ai/feature-list.md`.
 4. Review recent commits with `git log --oneline -5`.
 5. Install or sync dependencies with `uv sync`.
 6. Check if tests are already broken with `pytest`.
 
-Then select exactly one unfinished feature and work only on that feature until
-you either verify it or document why it is blocked.
+Then select exactly the highest priority unfinished feature and
+work only on that feature until you either verify it or document
+why it is blocked.
 
 ## Rules
 
@@ -27,14 +28,14 @@ you either verify it or document why it is blocked.
 ## Completion Gate
 
 A feature can move to `passing` only after the required verification succeeds
-and the result is recorded.
+and the result is recorded in the `evidence` field of `.ai/feature-list.md`.
 
 ## Before You Stop
 
-1. Update progress log in `claude-progress.md` by recording:
+1. Update progress log in `.ai/claude-progress.md` by recording:
     - current feature state,
     - new decisions made,
     - what is verified, unverified, or broken
     - any unresolved risk
-2. Check `clean-state-checklist.md` to leave the repo in a clean state for the next session.
-3. Commit once the repository is clean and safe to resume.
+2. Check `.ai/clean-state-checklist.md` to leave the repo in a clean state for the next session.
+3. Commit once the repository is clean and safe to resume using the commit format in `.github\instructions\general-review.instructions.md`.
