@@ -14,6 +14,25 @@ interface session_log {
 ```json
 [
   {
+    "datetime": "2026-06-01 14:42",
+    "current_feature": "F05",
+    "what_was_done": [
+      "Created src/vimai/config.py: Config dataclass (endpoint, deployment, api_version), ConfigError exception, load_config() reading AZURE_OPENAI_ENDPOINT + AZURE_OPENAI_DEPLOYMENT (required) and AZURE_OPENAI_API_VERSION (optional, defaults to 2024-05-01-preview)",
+      "Created src/vimai/llm.py: build_llm(config) creates AzureChatOpenAI authenticated via DefaultAzureCredential + get_bearer_token_provider for scope https://cognitiveservices.azure.com/.default — no API key",
+      "Created tests/test_config.py: 11 unit tests (all var combinations, whitespace stripping, error message content, default api_version)",
+      "Created tests/test_llm.py: 5 unit tests with mocked DefaultAzureCredential and get_bearer_token_provider",
+      "All 17 pytest tests pass; ruff format + check clean"
+    ],
+    "decision": [
+      "api_version defaults to 2024-05-01-preview when env var is absent or whitespace-only",
+      "Whitespace stripped from all env var values before validation to catch accidental padding",
+      "llm.py isolates credential construction; tests patch at module level for clean mocking",
+      "azure_deployment is stored as deployment_name on AzureChatOpenAI instance (langchain-openai internals)"
+    ],
+    "issues": [],
+    "next_step": "Implement F01 (Inline LLM query via :AI command) — depends on F05 config + llm modules now in place."
+  },
+  {
     "datetime": "2026-06-01 13:45",
     "current_feature": "spec",
     "what_was_done": [

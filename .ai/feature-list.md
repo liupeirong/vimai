@@ -118,7 +118,7 @@ interface feature_list {
       "area": "llm integration",
       "title": "Azure OpenAI + Entra ID authentication",
       "user_visible_behavior": "Plugin connects to Azure OpenAI using Entra ID. No API key required.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "Auth uses DefaultAzureCredential (az login, managed identity, etc.)",
         "Required env vars: AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_DEPLOYMENT",
@@ -126,7 +126,13 @@ interface feature_list {
         "Missing required vars produce a clear error message",
         "No secrets in source code"
       ],
-      "evidence": [],
+      "evidence": [
+        "src/vimai/config.py: Config dataclass + ConfigError + load_config() implemented",
+        "src/vimai/llm.py: build_llm() uses DefaultAzureCredential via get_bearer_token_provider",
+        "tests/test_config.py: 11 unit tests covering all env var cases, whitespace, defaults",
+        "tests/test_llm.py: 5 unit tests with mocked credentials, no real Azure calls",
+        "pytest: 17/17 passed; ruff format + check: clean"
+      ],
       "notes": "azure-identity already in pyproject.toml. Add langchain-openai."
     },
     {
