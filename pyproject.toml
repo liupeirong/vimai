@@ -20,3 +20,8 @@ dev = [
     "pytest-mock>=3.14.0",
     "ruff>=0.15.15",
 ]
+
+[tool.pytest.ini_options]
+markers = [
+    "e2e: end-to-end tests that call real Azure OpenAI (skipped unless RUN_E2E=1)",
+]

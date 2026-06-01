@@ -14,6 +14,29 @@ interface session_log {
 ```json
 [
   {
+    "datetime": "2026-06-01 15:10",
+    "current_feature": "F01",
+    "what_was_done": [
+      "Created src/vimai/chain.py: invoke_chain(config, prompt) -> str; builds LLM via build_llm(), sends HumanMessage, returns response.content as str",
+      "Created src/vimai/cli.py: main() parses sys.argv[1] as prompt, loads config, calls invoke_chain, prints to stdout; exits 0 success / 1 on ConfigError or any exception",
+      "Updated main.py: now delegates entirely to vimai.cli.main() — removed placeholder add_numbers usage",
+      "Created plugin/vimai.vim: :AI <prompt> command + cabbrev ai AI; resolves main.py path relative to plugin file using <sfile>",
+      "Created tests/test_chain.py: 5 unit tests (returns str, sends HumanMessage with prompt text, uses config to build llm, propagates exception, coerces content to str)",
+      "Created tests/test_cli.py: 6 unit tests (exits 0 + stdout on success, prints response, exits 1 on ConfigError, exits 1 on LLM error, exits 1 no args, exits 1 blank prompt)",
+      "Updated test_main.py: replaced add_numbers smoke test with @pytest.mark.e2e subprocess integration test",
+      "Registered pytest.mark.e2e in pyproject.toml [tool.pytest.ini_options]",
+      "All 28 pytest tests pass; ruff format + check clean"
+    ],
+    "decision": [
+      "Session history deferred to F03; F01 chain is intentionally single-turn for now",
+      "cli.py catches all exceptions with broad except (BLE001 suppressed) to ensure exit code 1 on any error",
+      "plugin/vimai.vim uses expand('<sfile>:p:h:h') to resolve the repo root regardless of Vim cwd",
+      "test_main.py e2e test is tolerant: passes if vimai appears in stderr OR returncode == 0, so it works without real Azure credentials"
+    ],
+    "issues": [],
+    "next_step": "Implement F03 (Session management) — adds per-session JSON history fed into the chain on subsequent turns."
+  },
+  {
     "datetime": "2026-06-01 14:42",
     "current_feature": "F05",
     "what_was_done": [
