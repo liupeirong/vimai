@@ -1,29 +1,44 @@
-"""CLI entry point called by Vim via :! shell integration (F01).
+"""CLI entry point called by Vim via :! shell integration (F01, F03).
 
 Usage:
     python main.py '<prompt>'
+    python main.py --session /tmp/vimai-session-....tmp '<prompt>'
 
 Prints the LLM response to stdout (Vim displays it like :!ls output).
 Exits 0 on success, 1 on any error.
 """
 
+import argparse
 import sys
+from pathlib import Path
 
 from .config import ConfigError, load_config
-from .chain import invoke_chain
+from .chain import invoke_chain, invoke_chain_with_history
+
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(prog="vimai", add_help=False)
+    parser.add_argument("prompt", nargs="?", default=None)
+    parser.add_argument("--session", default=None, help="Path to session JSON file")
+    return parser.parse_args()
 
 
 def main() -> None:
     """Parse arguments, invoke the LLM, and print the response."""
-    if len(sys.argv) < 2 or not sys.argv[1].strip():
+    args = _parse_args()
+
+    if not args.prompt or not args.prompt.strip():
         print("Usage: vimai '<prompt>'", file=sys.stderr)
         sys.exit(1)
 
-    prompt = sys.argv[1].strip()
+    prompt = args.prompt.strip()
 
     try:
         config = load_config()
-        response = invoke_chain(config, prompt)
+        if args.session:
+            response = invoke_chain_with_history(config, Path(args.session), prompt)
+        else:
+            response = invoke_chain(config, prompt)
         print(response)
         sys.exit(0)
     except ConfigError as exc:

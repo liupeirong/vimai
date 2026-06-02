@@ -1,4 +1,4 @@
-" vimai.vim - Vim plugin for inline LLM queries (F01)
+" vimai.vim - Vim plugin for inline LLM queries (F01, F03)
 "
 " Usage:
 "   :AI <prompt>   Send a prompt to the LLM; response prints like :! output
@@ -21,10 +21,18 @@ cabbrev ai AI
 let s:plugin_dir = expand('<sfile>:p:h:h')
 let s:main_script = s:plugin_dir . '/main.py'
 
+" Generate a session file path for this Vim process.
+" Pattern: vimai-session-YYYY-MM-DD-HH-MM-<pid>.tmp in Vim's temp directory.
+let s:session_file = fnamemodify(tempname(), ':h') .
+      \ '/vimai-session-' . strftime('%Y-%m-%d-%H-%M') .
+      \ '-' . getpid() . '.tmp'
+
 " :AI <prompt>  – run prompt through vimai and display response inline.
 command! -nargs=+ AI call s:RunAI(<q-args>)
 
 function! s:RunAI(prompt) abort
-  let l:cmd = 'python ' . shellescape(s:main_script) . ' ' . shellescape(a:prompt)
+  let l:cmd = 'python ' . shellescape(s:main_script) .
+        \ ' --session ' . shellescape(s:session_file) .
+        \ ' ' . shellescape(a:prompt)
   execute '!' . l:cmd
 endfunction
