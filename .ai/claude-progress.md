@@ -14,6 +14,36 @@ interface session_log {
 ```json
 [
   {
+    "datetime": "2026-06-02 14:09",
+    "current_feature": "F01 (display UX improvements)",
+    "what_was_done": [
+      "Updated feature-list.md: F01 user_visible_behavior updated to describe vertical split; F01 notes cleaned up with alternatives discussed; F01 verification/evidence updated to reflect new implementation; added F10 (packaging, priority 3, not_started)",
+      "plugin/vimai.vim: replaced execute '!' with system() + vnew vertical split scratch buffer (buftype=nofile, bufhidden=hide, nobuflisted, noswapfile)",
+      "plugin/vimai.vim: fixed Windows ^M (\\r) artifacts with substitute(l:response, '\\r', '', 'g')",
+      "plugin/vimai.vim: fixed multi-turn appending — introduced s:ai_bufnum script variable; was using bufnr('[AI Response]') which misinterprets brackets as regex character class and always returns -1",
+      "plugin/vimai.vim: fixed cursor returning to wrong window — replaced winnr()/wincmd with win_getid()/win_gotoid() for stable window identity across splits",
+      "plugin/vimai.vim: set splitright before vnew (restored after) so scratch buffer always opens on the right",
+      "plugin/vimai.vim: refactored into s:ShowInScratchBuffer(prompt, lines) + three public test helpers (VimaiTestShow, VimaiTestReset, VimaiTestBufnum)",
+      "src/vimai/cli.py: added sys.stdout.reconfigure(encoding='utf-8') and sys.stderr.reconfigure(encoding='utf-8') to fix Unicode encode errors on Windows (e.g. → U+2192)",
+      "tests/test_cli.py: added test_prints_unicode_response_to_stdout",
+      "tests/vimai.vader: 12 vader test cases covering first-open, cursor stability, buffer reuse, append, separator, read-only, reopen after close",
+      "README.md: updated Using vimai section to describe vertical split UX; added Vim plugin tests section under For Developers",
+      "CLAUDE.md: added README.md update step to Before You Stop checklist"
+    ],
+    "decision": [
+      "bufhidden=hide (not wipe) so buffer survives window close and can be reopened with vertical sbuffer",
+      "s:ai_bufnum stored as script variable — bufnr() with bracketed name is unreliable due to regex interpretation",
+      "win_getid()/win_gotoid() used instead of winnr()/wincmd — window numbers shift when splits open",
+      "set splitright saved/restored around vnew to avoid permanently changing user's Vim settings",
+      "Display logic extracted to s:ShowInScratchBuffer so it can be tested without Python/Azure",
+      "Test helpers (VimaiTestShow etc.) are public (no s: prefix) intentionally for vader access"
+    ],
+    "issues": [
+      "vader.vim tests cannot be run in CI without a headless Vim setup — documented in README, left for developer to run manually"
+    ],
+    "next_step": "Implement next highest-priority not_started feature: F02 (Multi-line prompt via scratch buffer) or F04 (Session control: /clear, /purge, /help)."
+  },
+  {
     "datetime": "2026-06-02 11:42",
     "current_feature": "F03",
     "what_was_done": [

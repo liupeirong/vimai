@@ -1,7 +1,7 @@
 " vimai.vim - Vim plugin for inline LLM queries (F01, F03)
 "
 " Usage:
-"   :AI <prompt>   Send a prompt to the LLM; response prints like :! output
+"   :AI <prompt>   Send a prompt to the LLM; response opens in a vertical split
 "   :ai <prompt>   Alias (cabbrev) for :AI
 "
 " Requirements:
@@ -39,9 +39,69 @@ command! -nargs=+ AI call s:RunAI(<q-args>)
 " :AISession  – show the session file path for this Vim process (for debugging).
 command! AISession echo 'Session file: ' . s:session_file
 
+" Buffer number of the AI response scratch buffer; -1 means not yet created.
+let s:ai_bufnum = -1
+
+" Core display logic — separated from system() so it can be driven by tests.
+function! s:ShowInScratchBuffer(prompt, lines) abort
+  let l:orig_winid = win_getid()
+  let l:entry = ['> ' . a:prompt, ''] + a:lines
+
+  if s:ai_bufnum != -1 && bufexists(s:ai_bufnum)
+    " Buffer exists — bring it into view if its window was closed.
+    if bufwinnr(s:ai_bufnum) == -1
+      execute 'vertical sbuffer ' . s:ai_bufnum
+    else
+      execute bufwinnr(s:ai_bufnum) . 'wincmd w'
+    endif
+    setlocal modifiable
+    call append(line('$'), ['', repeat('-', 40), ''] + l:entry)
+    setlocal nomodifiable
+    normal! G
+  else
+    " First call this session — open a vertical split scratch buffer on the right.
+    let l:save_splitright = &splitright
+    set splitright
+    vnew
+    let &splitright = l:save_splitright
+    setlocal buftype=nofile bufhidden=hide nobuflisted noswapfile
+    silent file [AI\ Response]
+    let s:ai_bufnum = bufnr('%')
+    call setline(1, l:entry)
+    setlocal nomodifiable
+  endif
+
+  " Return to the original editing window using its stable ID.
+  call win_gotoid(l:orig_winid)
+endfunction
+
 function! s:RunAI(prompt) abort
   let l:cmd = 'python ' . shellescape(s:main_script) .
         \ ' --session ' . shellescape(s:session_file) .
         \ ' ' . shellescape(a:prompt)
-  execute '!' . l:cmd
+  let l:response = system(l:cmd)
+  let l:response = substitute(l:response, '\r', '', 'g')
+  call s:ShowInScratchBuffer(a:prompt, split(l:response, "\n"))
+endfunction
+
+" ── Test helpers (public) ────────────────────────────────────────────────────
+" These are intentionally public so vader tests can drive the display logic
+" directly without needing a live Python/Azure connection.
+
+" Drive the scratch buffer with a fixed response — used by vader tests.
+function! VimaiTestShow(prompt, response) abort
+  call s:ShowInScratchBuffer(a:prompt, split(a:response, "\n"))
+endfunction
+
+" Wipe the scratch buffer and reset state — call between vader test cases.
+function! VimaiTestReset() abort
+  if s:ai_bufnum != -1 && bufexists(s:ai_bufnum)
+    execute 'bwipeout! ' . s:ai_bufnum
+  endif
+  let s:ai_bufnum = -1
+endfunction
+
+" Return the current scratch buffer number — used by vader assertions.
+function! VimaiTestBufnum() abort
+  return s:ai_bufnum
 endfunction

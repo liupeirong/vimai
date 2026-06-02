@@ -1,0 +1,109 @@
+" vimai.vader — Vader tests for scratch buffer / window management
+"
+" These tests cover the VimScript display logic in plugin/vimai.vim.
+" They use VimaiTestShow / VimaiTestReset / VimaiTestBufnum so no Python
+" or Azure connection is required.
+"
+" Run (one-off):
+"   vim -u NONE -N \
+"     +"set runtimepath+=<path/to/vader.vim>,<path/to/vimai>" \
+"     +"runtime plugin/vader.vim" \
+"     +"runtime plugin/vimai.vim" \
+"     +"Vader tests/vimai.vader"
+"
+" Or inside Vim with vader.vim installed:
+"   :Vader tests/vimai.vader
+
+" ── helpers ─────────────────────────────────────────────────────────────────
+
+Before (each):
+  " Open a plain editing buffer so there is always a 'main editor window'.
+  enew
+  call VimaiTestReset()
+
+After (each):
+  call VimaiTestReset()
+  " Close any extra windows opened during the test.
+  silent! only!
+
+" ── test cases ───────────────────────────────────────────────────────────────
+
+Execute (first call opens a vertical split):
+  let orig_win = winnr()
+  call VimaiTestShow('hello', 'world')
+  AssertEqual 2, winnr('$'), "expected 2 windows after first :AI call"
+
+Execute (cursor stays in the original window after first call):
+  let orig_winid = win_getid()
+  call VimaiTestShow('hello', 'world')
+  AssertEqual orig_winid, win_getid(), "cursor moved away from original window"
+
+Execute (scratch buffer is registered after first call):
+  call VimaiTestShow('hello', 'world')
+  Assert VimaiTestBufnum() != -1, "s:ai_bufnum not set after first call"
+  Assert bufexists(VimaiTestBufnum()), "scratch buffer does not exist"
+
+Execute (scratch buffer contains prompt line):
+  call VimaiTestShow('hello', 'world')
+  let lines = getbufline(VimaiTestBufnum(), 1, '$')
+  Assert index(lines, '> hello') >= 0, "prompt line '> hello' not found in buffer"
+
+Execute (scratch buffer contains response line):
+  call VimaiTestShow('hello', 'world')
+  let lines = getbufline(VimaiTestBufnum(), 1, '$')
+  Assert index(lines, 'world') >= 0, "response line 'world' not found in buffer"
+
+Execute (second call reuses same buffer, not a new one):
+  call VimaiTestShow('first', 'answer one')
+  let bufnum_after_first = VimaiTestBufnum()
+  call VimaiTestShow('second', 'answer two')
+  AssertEqual bufnum_after_first, VimaiTestBufnum(), "second call created a new buffer instead of reusing"
+
+Execute (second call does not open an extra window):
+  call VimaiTestShow('first', 'answer one')
+  let wins_after_first = winnr('$')
+  call VimaiTestShow('second', 'answer two')
+  AssertEqual wins_after_first, winnr('$'), "extra window opened on second call"
+
+Execute (second call appends separator and new entry):
+  call VimaiTestShow('first', 'answer one')
+  call VimaiTestShow('second', 'answer two')
+  let lines = getbufline(VimaiTestBufnum(), 1, '$')
+  Assert index(lines, '> second') >= 0, "second prompt not found after append"
+  Assert index(lines, 'answer two') >= 0, "second response not found after append"
+  " Separator row should exist
+  Assert index(lines, repeat('-', 40)) >= 0, "separator line missing between entries"
+
+Execute (cursor stays in original window after second call):
+  call VimaiTestShow('first', 'answer one')
+  let orig_winid = win_getid()
+  call VimaiTestShow('second', 'answer two')
+  AssertEqual orig_winid, win_getid(), "cursor moved away from original window on second call"
+
+Execute (scratch buffer is read-only):
+  call VimaiTestShow('hello', 'world')
+  let bufnum = VimaiTestBufnum()
+  " Switch to scratch buffer and check nomodifiable
+  execute bufwinnr(bufnum) . 'wincmd w'
+  Assert !&modifiable, "scratch buffer should be nomodifiable"
+
+Execute (reopens scratch buffer if window was closed):
+  call VimaiTestShow('first', 'answer one')
+  let bufnum = VimaiTestBufnum()
+  " Close the scratch window (buffer stays alive due to bufhidden=hide)
+  execute bufwinnr(bufnum) . 'wincmd w'
+  close
+  AssertEqual -1, bufwinnr(bufnum), "scratch window should be closed"
+  " Second call should reopen it
+  call VimaiTestShow('second', 'answer two')
+  Assert bufwinnr(VimaiTestBufnum()) != -1, "scratch window was not reopened"
+  AssertEqual bufnum, VimaiTestBufnum(), "reopened a different buffer instead of the original"
+
+Execute (cursor stays in original window after reopen):
+  call VimaiTestShow('first', 'answer one')
+  let bufnum = VimaiTestBufnum()
+  execute bufwinnr(bufnum) . 'wincmd w'
+  close
+  let orig_winid = win_getid()
+  call VimaiTestShow('second', 'answer two')
+  AssertEqual orig_winid, win_getid(), "cursor moved away from original window after reopen"
