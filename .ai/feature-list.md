@@ -94,15 +94,24 @@ interface feature_list {
       "area": "memory management",
       "title": "Session management",
       "user_visible_behavior": "Conversation history is persisted per session in a JSON tmp file. History is sent to LLM on each turn.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "Session file created on first prompt: vimai-session-yyyy-mm-dd-hh-mm-<pid>.tmp in Vim tmpdir",
         "Each entry: {role, content, timestamp}",
         "History passed to LLM on subsequent prompts in same session",
         "Session file saved on Vim exit if non-empty"
       ],
-      "evidence": [],
-      "notes": "File stored in $TMPDIR or system tmp. PID in name avoids multi-instance collisions."
+      "evidence": [
+        "src/vimai/session.py: SessionEntry dataclass, new_session_path(), load_session(), save_session()",
+        "src/vimai/chain.py: invoke_chain_with_history() builds messages from history, persists both turns after LLM call",
+        "src/vimai/cli.py: --session flag routes to invoke_chain_with_history; no-session path unchanged (F01 backward-compat)",
+        "plugin/vimai.vim: generates vimai-session-YYYY-MM-DD-HH-MM-<pid>.tmp at startup via strftime+getpid(), passes --session to python on every :AI call",
+        "tests/test_session.py: 13 unit tests covering path format, load/save roundtrip, missing file, str/Path acceptance",
+        "tests/test_chain.py: 6 new tests for invoke_chain_with_history (empty session, history prepended, accumulation, save, propagate exception)",
+        "tests/test_cli.py: 3 new tests for --session flag routing and Path coercion",
+        "pytest: 50/50 passed; ruff format + check: clean"
+      ],
+      "notes": "File stored in $TMPDIR or system tmp. PID in name avoids multi-instance collisions. Written after every turn so session survives Vim exit without a separate flush."
     },
     {
       "id": "F04",

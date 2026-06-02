@@ -1,4 +1,4 @@
-"""Unit tests for vimai.cli (F01)."""
+"""Unit tests for vimai.cli (F01, F03)."""
 
 import sys
 from pathlib import Path
@@ -98,3 +98,67 @@ class TestCliMain:
             main()
 
         assert exc_info.value.code == 1
+
+
+class TestCliSessionFlag:
+    def test_with_session_calls_invoke_chain_with_history(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture,
+        tmp_path: Path,
+    ) -> None:
+        session = tmp_path / "s.tmp"
+        monkeypatch.setattr(sys, "argv", ["vimai", "--session", str(session), "hello"])
+
+        with (
+            patch("vimai.cli.load_config"),
+            patch(
+                "vimai.cli.invoke_chain_with_history", return_value="hi"
+            ) as mock_hist,
+            patch("vimai.cli.invoke_chain") as mock_single,
+            pytest.raises(SystemExit) as exc_info,
+        ):
+            main()
+
+        assert exc_info.value.code == 0
+        mock_hist.assert_called_once()
+        mock_single.assert_not_called()
+        assert capsys.readouterr().out.strip() == "hi"
+
+    def test_without_session_calls_invoke_chain(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+    ) -> None:
+        monkeypatch.setattr(sys, "argv", ["vimai", "hello"])
+
+        with (
+            patch("vimai.cli.load_config"),
+            patch("vimai.cli.invoke_chain", return_value="world") as mock_single,
+            patch("vimai.cli.invoke_chain_with_history") as mock_hist,
+            pytest.raises(SystemExit) as exc_info,
+        ):
+            main()
+
+        assert exc_info.value.code == 0
+        mock_single.assert_called_once()
+        mock_hist.assert_not_called()
+
+    def test_session_path_passed_as_path_object(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        session = tmp_path / "s.tmp"
+        monkeypatch.setattr(sys, "argv", ["vimai", "--session", str(session), "hello"])
+
+        with (
+            patch("vimai.cli.load_config"),
+            patch(
+                "vimai.cli.invoke_chain_with_history", return_value="ok"
+            ) as mock_hist,
+            pytest.raises(SystemExit),
+        ):
+            main()
+
+        _, kwargs = mock_hist.call_args
+        # second positional arg is session_path
+        call_args = mock_hist.call_args[0]
+        assert isinstance(call_args[1], Path)
+        assert call_args[1] == session

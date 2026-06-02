@@ -1,9 +1,12 @@
-"""Single-turn LangChain invocation against Azure OpenAI (F01)."""
+"""LangChain invocation against Azure OpenAI (F01, F03)."""
 
-from langchain_core.messages import HumanMessage
+from pathlib import Path
+
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 
 from .config import Config
 from .llm import build_llm
+from .session import SessionEntry, load_session, save_session
 
 
 def invoke_chain(config: Config, prompt: str) -> str:
@@ -23,3 +26,47 @@ def invoke_chain(config: Config, prompt: str) -> str:
     llm = build_llm(config)
     response = llm.invoke([HumanMessage(content=prompt)])
     return str(response.content)
+
+
+def invoke_chain_with_history(
+    config: Config, session_path: Path | str, prompt: str
+) -> str:
+    """Send a prompt to Azure OpenAI with prior session history, then persist both turns.
+
+    Loads existing history from *session_path* (if any), appends the new user
+    prompt, calls the LLM, appends the assistant reply, and saves the updated
+    history back to *session_path*.
+
+    Args:
+        config: Validated configuration from load_config().
+        session_path: Path to the session JSON file (created on first call).
+        prompt: The user's prompt text.
+
+    Returns:
+        The LLM response as a plain string.
+
+    Raises:
+        Any exception raised by the underlying LLM client is propagated.
+    """
+    from datetime import datetime, timezone
+
+    llm = build_llm(config)
+    history = load_session(session_path)
+
+    messages: list[BaseMessage] = []
+    for entry in history:
+        if entry.role == "user":
+            messages.append(HumanMessage(content=entry.content))
+        elif entry.role == "assistant":
+            messages.append(AIMessage(content=entry.content))
+    messages.append(HumanMessage(content=prompt))
+
+    response = llm.invoke(messages)
+    response_text = str(response.content)
+
+    now = datetime.now(tz=timezone.utc).isoformat()
+    history.append(SessionEntry("user", prompt, now))
+    history.append(SessionEntry("assistant", response_text, now))
+    save_session(session_path, history)
+
+    return response_text

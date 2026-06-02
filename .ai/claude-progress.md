@@ -14,6 +14,28 @@ interface session_log {
 ```json
 [
   {
+    "datetime": "2026-06-02 11:42",
+    "current_feature": "F03",
+    "what_was_done": [
+      "Created src/vimai/session.py: SessionEntry dataclass (role, content, timestamp), new_session_path(tmpdir?), load_session(path), save_session(path, entries)",
+      "Updated src/vimai/chain.py: added invoke_chain_with_history(config, session_path, prompt) — loads history, builds [HumanMessage|AIMessage]* + new HumanMessage, calls LLM, saves both turns back",
+      "Updated src/vimai/cli.py: switched to argparse, added --session flag; routes to invoke_chain_with_history when present, invoke_chain when absent (backward-compat with F01)",
+      "Updated plugin/vimai.vim: generates s:session_file = vimai-session-YYYY-MM-DD-HH-MM-<pid>.tmp at plugin load using strftime+getpid(); passes --session <path> to every :AI call",
+      "Created tests/test_session.py: 13 unit tests (path format, tmpdir default, file not created, load missing=[], save/load roundtrip, str path accept, overwrite, to_dict/from_dict)",
+      "Added 6 new tests to tests/test_chain.py for invoke_chain_with_history",
+      "Added 3 new tests to tests/test_cli.py for --session flag",
+      "pytest: 50/50 passed; ruff format + check: clean"
+    ],
+    "decision": [
+      "Session written after every turn (not on Vim exit) — file is already on disk if Vim exits unexpectedly",
+      "argparse replaces manual sys.argv slicing in cli.py; existing tests unaffected because argparse reads sys.argv the same way",
+      "invoke_chain_with_history imported alongside invoke_chain — both exported from chain.py, no new module needed",
+      "Vim plugin uses strftime('%Y-%m-%d-%H-%M') + getpid() to produce structured session filename; Python new_session_path() uses same pattern for symmetry"
+    ],
+    "issues": [],
+    "next_step": "Implement next highest-priority not_started feature: F02 (Multi-line prompt via scratch buffer, priority 2) or F07 (Generic agent loader, priority 2)."
+  },
+  {
     "datetime": "2026-06-01 15:10",
     "current_feature": "F01",
     "what_was_done": [
