@@ -30,6 +30,9 @@ let s:session_file = fnamemodify(tempname(), ':h') .
 " :AI <prompt>  – run prompt through vimai and display response inline.
 command! -nargs=+ AI call s:RunAI(<q-args>)
 
+" :AISession  – show the session file path for this Vim process (for debugging).
+command! AISession echo 'Session file: ' . s:session_file
+
 function! s:RunAI(prompt) abort
   let l:cmd = 'python ' . shellescape(s:main_script) .
         \ ' --session ' . shellescape(s:session_file) .
