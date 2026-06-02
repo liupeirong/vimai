@@ -115,6 +115,26 @@ You can also type `:ai` in lowercase — it is aliased to `:AI`:
 :ai Explain the difference between :s and :S in a substitution command
 ```
 
+### Conversation history
+
+vimai automatically maintains conversation history for the current Vim session.
+Every prompt you send and every response you receive are saved to a temporary JSON file
+(`vimai-session-YYYY-MM-DD-HH-MM-<pid>.tmp` in your system temp directory).
+
+History is sent to the LLM on every subsequent turn, so you can ask follow-up questions naturally:
+
+```vim
+:AI What is a Vim macro?
+:AI How do I record one?
+:AI Can I run it 10 times at once?
+```
+
+The session file is written after every turn, so your history is preserved even if Vim exits
+unexpectedly. A new session file is created each time you open Vim.
+
+> **Note:** Session files accumulate in your temp directory over time. A future `:AI /purge`
+> command will let you delete them all at once.
+
 ### Loading a .env file
 
 If you store your environment variables in a `.env` file, load them before activating the venv
