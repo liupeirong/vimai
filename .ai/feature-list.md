@@ -73,7 +73,7 @@ interface feature_list {
         "tests/test_cli.py: 6 unit tests covering exit codes, stdout output, config errors, LLM errors, no-args, blank prompt",
         "pytest: 28/28 passed; ruff format + check: clean"
       ],
-      "notes": "Response displayed in vertical split scratch buffer (buftype=nofile, bufhidden=wipe). User closes with :q. Session history in F03. No Python changes required for this display update."
+      "notes": "Response displayed in vertical split scratch buffer (buftype=nofile, bufhidden=hide). User closes with :q. Session history in F03. No Python changes required for this display update."
     },
     {
       "id": "F02",
