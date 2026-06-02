@@ -119,8 +119,10 @@ You can also type `:ai` in lowercase — it is aliased to `:AI`:
 
 vimai automatically maintains conversation history for the current Vim session.
 Every prompt you send and every response you receive are saved to a temporary JSON file
-(`vimai-session-YYYY-MM-DD-HH-MM-<pid>.tmp` in your system temp directory —
-`%TEMP%` on Windows, `/tmp` on Linux/macOS).
+(`vimai-session-YYYY-MM-DD-HH-MM-<pid>.tmp` in Vim's temp directory).
+The exact location depends on your environment — run `:AISession` inside Vim to print the full path.
+On native Windows Vim it is typically under `%TEMP%`; on Git Bash / MSYS2 it appears as `/tmp/<random>/`
+which maps to `%LOCALAPPDATA%\Temp` — confirm with `:!cygpath -w /tmp`.
 
 History is sent to the LLM on every subsequent turn, so you can ask follow-up questions naturally:
 
@@ -168,6 +170,7 @@ Get-Content .env | ForEach-Object {
 | `ModuleNotFoundError: langchain_openai` | Wrong Python in use | Activate `.venv` before launching Vim (Step 5) |
 | `vimai config error: Missing required environment variable(s)` | Env vars not set | Set `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_DEPLOYMENT` before launching Vim |
 | `DefaultAzureCredential: no credentials` | Not logged in | Run `az login` |
+| Can't find session file | Path is environment-dependent | Run `:AISession` in Vim to print the exact path |
 
 ### Configuration reference
 
