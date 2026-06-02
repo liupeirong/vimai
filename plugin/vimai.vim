@@ -21,9 +21,15 @@ cabbrev ai AI
 let s:plugin_dir = expand('<sfile>:p:h:h')
 let s:main_script = s:plugin_dir . '/main.py'
 
-" Generate a session file path for this Vim process.
-" Pattern: vimai-session-YYYY-MM-DD-HH-MM-<pid>.tmp in Vim's temp directory.
-let s:session_file = fnamemodify(tempname(), ':h') .
+" Generate a session file path for this Vim process directly in the system
+" temp directory — $TEMP on Windows, $TMPDIR (or /tmp) on Linux/macOS.
+" Avoids fnamemodify(tempname()) which adds an unpredictable random subdirectory.
+if has('win32') || has('win64') || has('win32unix')
+  let s:tmpdir = expand('$TEMP')
+else
+  let s:tmpdir = len($TMPDIR) > 0 ? expand('$TMPDIR') : '/tmp'
+endif
+let s:session_file = s:tmpdir .
       \ '/vimai-session-' . strftime('%Y-%m-%d-%H-%M') .
       \ '-' . getpid() . '.tmp'
 
