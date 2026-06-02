@@ -125,32 +125,18 @@ You can also type `:ai` in lowercase — it is aliased to `:AI`:
 ### Conversation history
 
 vimai automatically maintains conversation history for the current Vim session.
-Every prompt you send and every response you receive are saved to a temporary JSON file.
-Run `:AISession` inside Vim to see the exact path:
+Every prompt you send and every response you receive are saved to a temporary JSON file
+in your system temp directory:
+
+| Environment | Session file location |
+| --- | --- |
+| Windows (any shell) | `%TEMP%\vimai-session-YYYY-MM-DD-HH-MM-<pid>.tmp` |
+| Linux / macOS | `/tmp/vimai-session-YYYY-MM-DD-HH-MM-<pid>.tmp` |
+
+Run `:AISession` inside Vim to confirm the exact path:
 
 ```vim
 :AISession
-```
-
-The location varies by environment:
-
-| Environment | Typical path |
-| --- | --- |
-| Linux / macOS | `/tmp/vimai-session-....tmp` |
-| Windows — native Vim (cmd/PowerShell) | `%TEMP%\vimai-session-....tmp` |
-| Windows — Vim launched from Git Bash | `/tmp/<random>/vimai-session-....tmp` (a POSIX path inside Git Bash) |
-
-On Git Bash the `/tmp/<random>/` directory is a subdirectory inside your Windows temp folder.
-To find its Windows equivalent run:
-
-```vim
-:!cygpath -w /tmp
-```
-
-Then look for the file there in Explorer or PowerShell:
-
-```powershell
-Get-ChildItem "$env:LOCALAPPDATA\Temp" -Recurse -Filter "vimai-session-*.tmp"
 ```
 
 History is sent to the LLM on every subsequent turn, so you can ask follow-up questions naturally:
@@ -199,7 +185,7 @@ Get-Content .env | ForEach-Object {
 | `ModuleNotFoundError: langchain_openai` | Wrong Python in use | Activate `.venv` before launching Vim (Step 5) |
 | `vimai config error: Missing required environment variable(s)` | Env vars not set | Set `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_DEPLOYMENT` before launching Vim |
 | `DefaultAzureCredential: no credentials` | Not logged in | Run `az login` |
-| Can't find session file | Path is environment-dependent | Run `:AISession` in Vim to print the exact path |
+| Can't find session file | Unsure of exact path | Run `:AISession` in Vim; file is in `%TEMP%` on Windows or `/tmp` on Linux/macOS |
 
 ### Configuration reference
 
