@@ -25,6 +25,8 @@ def _parse_args() -> argparse.Namespace:
 
 def main() -> None:
     """Parse arguments, invoke the LLM, and print the response."""
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
     args = _parse_args()
 
     if not args.prompt or not args.prompt.strip():

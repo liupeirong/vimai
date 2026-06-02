@@ -13,6 +13,21 @@ from vimai.config import ConfigError
 
 
 class TestCliMain:
+    def test_prints_unicode_response_to_stdout(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+    ) -> None:
+        monkeypatch.setattr(sys, "argv", ["vimai", "arrows"])
+
+        with (
+            patch("vimai.cli.load_config"),
+            patch("vimai.cli.invoke_chain", return_value="use → and ← to navigate"),
+            pytest.raises(SystemExit) as exc_info,
+        ):
+            main()
+
+        assert exc_info.value.code == 0
+        assert "→" in capsys.readouterr().out
+
     def test_exits_0_on_success(
         self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
     ) -> None:

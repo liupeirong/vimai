@@ -37,5 +37,6 @@ and the result is recorded in the `evidence` field of `.ai/feature-list.md`.
     - new decisions made,
     - what is verified, unverified, or broken
     - any unresolved risk
-2. Check `.ai/clean-state-checklist.md` to leave the repo in a clean state for the next session.
-3. Commit once the repository is clean and safe to resume using the commit format in `.github/instructions/general-review.instructions.md`.
+2. Update `README.md` if anything changed that affects end-user or developer experience.
+3. Check `.ai/clean-state-checklist.md` to leave the repo in a clean state for the next session.
+4. Commit once the repository is clean and safe to resume using the commit format in `.github/instructions/general-review.instructions.md`.

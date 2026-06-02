@@ -113,8 +113,8 @@ Once Vim is open, run:
 :AI What does the % register hold in Vim?
 ```
 
-The response is printed in the Vim command window, the same way `:!ls` shows shell output.
-Press **Enter** to return to your buffer.
+The response opens in a **vertical split** on the right side of your screen as a read-only buffer.
+Your cursor returns to your original window automatically. Close the response pane with `:q` when done.
 
 You can also type `:ai` in lowercase — it is aliased to `:AI`:
 
@@ -220,6 +220,32 @@ uv run pytest
 ```
 
 No Azure credentials are needed — all Azure and LangChain calls are mocked.
+
+### Vim plugin tests
+
+The VimScript buffer/window management is tested with [vader.vim](https://github.com/junegunn/vader.vim).
+
+Install vader.vim (once):
+
+```sh
+git clone https://github.com/junegunn/vader.vim ~/.vim/pack/plugins/start/vader.vim
+```
+
+Run the tests (replace `~/vimai` with your clone path):
+
+```sh
+vim -u NONE -N \
+  +"set runtimepath+=~/.vim/pack/plugins/start/vader.vim,~/vimai" \
+  +"runtime plugin/vader.vim" \
+  +"runtime plugin/vimai.vim" \
+  +"Vader tests/vimai.vader"
+```
+
+Or from inside Vim with vader.vim installed:
+
+```vim
+:Vader tests/vimai.vader
+```
 
 ### End-to-end tests
 
