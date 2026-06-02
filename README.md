@@ -119,7 +119,8 @@ You can also type `:ai` in lowercase — it is aliased to `:AI`:
 
 vimai automatically maintains conversation history for the current Vim session.
 Every prompt you send and every response you receive are saved to a temporary JSON file
-(`vimai-session-YYYY-MM-DD-HH-MM-<pid>.tmp` in your system temp directory).
+(`vimai-session-YYYY-MM-DD-HH-MM-<pid>.tmp` in your system temp directory —
+`%TEMP%` on Windows, `/tmp` on Linux/macOS).
 
 History is sent to the LLM on every subsequent turn, so you can ask follow-up questions naturally:
 
