@@ -86,9 +86,16 @@ C:\tools\vimai\.venv\Scripts\activate.bat
 
 # Windows (PowerShell)
 C:\tools\vimai\.venv\Scripts\Activate.ps1
+
+# Windows (Git Bash)
+source C:/tools/vimai/.venv/Scripts/activate
 ```
 
 Then launch Vim from that same terminal. You should see `(.venv)` in your prompt.
+
+> **Windows note:** If you launch Vim from Git Bash, make sure to activate the venv in Git Bash
+> (not cmd or PowerShell) before running `vim`, so the activated `python` is the one the plugin
+> will call.
 
 ### Step 6 — Authenticate with Azure
 
@@ -118,11 +125,33 @@ You can also type `:ai` in lowercase — it is aliased to `:AI`:
 ### Conversation history
 
 vimai automatically maintains conversation history for the current Vim session.
-Every prompt you send and every response you receive are saved to a temporary JSON file
-(`vimai-session-YYYY-MM-DD-HH-MM-<pid>.tmp` in Vim's temp directory).
-The exact location depends on your environment — run `:AISession` inside Vim to print the full path.
-On native Windows Vim it is typically under `%TEMP%`; on Git Bash / MSYS2 it appears as `/tmp/<random>/`
-which maps to `%LOCALAPPDATA%\Temp` — confirm with `:!cygpath -w /tmp`.
+Every prompt you send and every response you receive are saved to a temporary JSON file.
+Run `:AISession` inside Vim to see the exact path:
+
+```vim
+:AISession
+```
+
+The location varies by environment:
+
+| Environment | Typical path |
+| --- | --- |
+| Linux / macOS | `/tmp/vimai-session-....tmp` |
+| Windows — native Vim (cmd/PowerShell) | `%TEMP%\vimai-session-....tmp` |
+| Windows — Vim launched from Git Bash | `/tmp/<random>/vimai-session-....tmp` (a POSIX path inside Git Bash) |
+
+On Git Bash the `/tmp/<random>/` directory is a subdirectory inside your Windows temp folder.
+To find its Windows equivalent run:
+
+```vim
+:!cygpath -w /tmp
+```
+
+Then look for the file there in Explorer or PowerShell:
+
+```powershell
+Get-ChildItem "$env:LOCALAPPDATA\Temp" -Recurse -Filter "vimai-session-*.tmp"
+```
 
 History is sent to the LLM on every subsequent turn, so you can ask follow-up questions naturally:
 
