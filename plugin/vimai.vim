@@ -90,7 +90,15 @@ function! s:RunAI(prompt) abort
           \ ' --session ' . shellescape(s:session_file) .
           \ ' ' . shellescape(a:prompt)
   endif
-  let l:response = system(l:cmd)
+  " On Windows with cmd.exe the OEM code page (e.g. CP437/CP1252) mangles
+  " UTF-8 multi-byte sequences before Vim sees them. Force UTF-8 (chcp 65001)
+  " so Python's output is passed through unchanged.
+  " win32unix (Git Bash / MSYS2) uses a POSIX shell and handles UTF-8 natively.
+  if (has('win32') || has('win64')) && !has('win32unix')
+    let l:response = system('chcp 65001 >nul 2>&1 & ' . l:cmd)
+  else
+    let l:response = system(l:cmd)
+  endif
   let l:response = substitute(l:response, '\r', '', 'g')
 
   " /clear also wipes the scratch buffer so the user gets a visual signal
