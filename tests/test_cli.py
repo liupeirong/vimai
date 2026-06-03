@@ -264,3 +264,91 @@ class TestCliSlashCommands:
         assert exc_info.value.code == 0
         out = capsys.readouterr().out
         assert "/help" in out.lower()
+
+
+class TestCliCommandFlag:
+    """F04 (fix): --command flag used by Vim plugin to bypass MSYS2 path conversion."""
+
+    def test_command_help(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture,
+    ) -> None:
+        monkeypatch.setattr(sys, "argv", ["vimai", "--command", "help"])
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+
+        assert exc_info.value.code == 0
+        out = capsys.readouterr().out
+        assert "/clear" in out
+        assert "/purge" in out
+        assert "/help" in out
+
+    def test_command_clear(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture,
+        tmp_path: Path,
+    ) -> None:
+        session = tmp_path / "vimai-session-test.tmp"
+        session.write_text("[]")
+        monkeypatch.setattr(
+            sys, "argv", ["vimai", "--command", "clear", "--session", str(session)]
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+
+        assert exc_info.value.code == 0
+        assert "cleared" in capsys.readouterr().out.lower()
+        assert not session.exists()
+
+    def test_command_purge(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture,
+        tmp_path: Path,
+    ) -> None:
+        for i in range(2):
+            (tmp_path / f"vimai-session-2026-01-01-12-0{i}-1.tmp").write_text("[]")
+        session = tmp_path / "vimai-session-current.tmp"
+        monkeypatch.setattr(
+            sys, "argv", ["vimai", "--command", "purge", "--session", str(session)]
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+
+        assert exc_info.value.code == 0
+        assert "purged" in capsys.readouterr().out.lower()
+
+    def test_command_skips_llm(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture,
+    ) -> None:
+        monkeypatch.setattr(sys, "argv", ["vimai", "--command", "help"])
+
+        with (
+            patch("vimai.cli.load_config") as mock_config,
+            patch("vimai.cli.invoke_chain") as mock_chain,
+            pytest.raises(SystemExit),
+        ):
+            main()
+
+        mock_config.assert_not_called()
+        mock_chain.assert_not_called()
+
+    def test_unknown_command_flag_exits_0_with_hint(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture,
+    ) -> None:
+        monkeypatch.setattr(sys, "argv", ["vimai", "--command", "oops"])
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+
+        assert exc_info.value.code == 0
+        assert "/help" in capsys.readouterr().out.lower()
