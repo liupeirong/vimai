@@ -107,3 +107,22 @@ Execute (cursor stays in original window after reopen):
   let orig_winid = win_getid()
   call VimaiTestShow('second', 'answer two')
   AssertEqual orig_winid, win_getid(), "cursor moved away from original window after reopen"
+
+Execute (clear wipes scratch buffer content and shows confirmation):
+  call VimaiTestShow('hello', 'world')
+  let bufnum = VimaiTestBufnum()
+  call VimaiTestClear('Session cleared.')
+  let lines = getbufline(bufnum, 1, '$')
+  AssertEqual ['Session cleared.'], lines, "scratch buffer should contain only the cleared message"
+
+Execute (clear keeps cursor in original window):
+  call VimaiTestShow('hello', 'world')
+  let orig_winid = win_getid()
+  call VimaiTestClear('Session cleared.')
+  AssertEqual orig_winid, win_getid(), "cursor moved away from original window after clear"
+
+Execute (clear opens scratch buffer if not yet created):
+  call VimaiTestClear('Session cleared.')
+  Assert VimaiTestBufnum() != -1, "scratch buffer should exist after clear"
+  let lines = getbufline(VimaiTestBufnum(), 1, '$')
+  AssertEqual ['Session cleared.'], lines, "scratch buffer should show cleared message"
