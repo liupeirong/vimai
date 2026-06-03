@@ -1,4 +1,4 @@
-" vimai.vim - Vim plugin for inline LLM queries (F01, F03)
+" vimai.vim - Vim plugin for inline LLM queries (F01, F03, F04)
 "
 " Usage:
 "   :AI <prompt>   Send a prompt to the LLM; response opens in a vertical split
@@ -92,7 +92,46 @@ function! s:RunAI(prompt) abort
   endif
   let l:response = system(l:cmd)
   let l:response = substitute(l:response, '\r', '', 'g')
-  call s:ShowInScratchBuffer(a:prompt, split(l:response, "\n"))
+
+  " /clear also wipes the scratch buffer so the user gets a visual signal
+  " that the conversation history is gone.
+  if l:subcmd ==# 'clear'
+    call s:ClearScratchBuffer(split(l:response, "\n"))
+  else
+    call s:ShowInScratchBuffer(a:prompt, split(l:response, "\n"))
+  endif
+endfunction
+
+" Replace the scratch buffer contents with msg_lines and mark it read-only.
+" Opens the buffer in a split if it exists but is hidden; creates it otherwise.
+function! s:ClearScratchBuffer(msg_lines) abort
+  let l:orig_winid = win_getid()
+
+  if s:ai_bufnum != -1 && bufexists(s:ai_bufnum)
+    if bufwinnr(s:ai_bufnum) == -1
+      execute 'vertical sbuffer ' . s:ai_bufnum
+    else
+      execute bufwinnr(s:ai_bufnum) . 'wincmd w'
+    endif
+    setlocal modifiable
+    silent %delete _
+    call setline(1, a:msg_lines)
+    setlocal nomodifiable
+    normal! gg
+  else
+    " No scratch buffer yet — open one to show the confirmation.
+    let l:save_splitright = &splitright
+    set splitright
+    vnew
+    let &splitright = l:save_splitright
+    setlocal buftype=nofile bufhidden=hide nobuflisted noswapfile
+    silent file [AI\ Response]
+    let s:ai_bufnum = bufnr('%')
+    call setline(1, a:msg_lines)
+    setlocal nomodifiable
+  endif
+
+  call win_gotoid(l:orig_winid)
 endfunction
 
 " ── Test helpers (public) ────────────────────────────────────────────────────
@@ -102,6 +141,11 @@ endfunction
 " Drive the scratch buffer with a fixed response — used by vader tests.
 function! VimaiTestShow(prompt, response) abort
   call s:ShowInScratchBuffer(a:prompt, split(a:response, "\n"))
+endfunction
+
+" Simulate a /clear command — used by vader tests.
+function! VimaiTestClear(msg) abort
+  call s:ClearScratchBuffer([a:msg])
 endfunction
 
 " Wipe the scratch buffer and reset state — call between vader test cases.
