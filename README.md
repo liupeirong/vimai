@@ -150,8 +150,30 @@ History is sent to the LLM on every subsequent turn, so you can ask follow-up qu
 The session file is written after every turn, so your history is preserved even if Vim exits
 unexpectedly. A new session file is created each time you open Vim.
 
-> **Note:** Session files accumulate in your temp directory over time. A future `:AI /purge`
-> command will let you delete them all at once.
+### Session commands
+
+Use slash commands to manage your session without making an LLM call:
+
+| Command | What it does |
+| --- | --- |
+| `:AI /clear` | End the current session (deletes the session file) |
+| `:AI /purge` | Delete **all** `vimai-session-*.tmp` files from your temp directory |
+| `:AI /help` | List all available commands |
+
+```vim
+:AI /clear
+" → Session cleared.
+
+:AI /purge
+" → Purged 3 session files.
+
+:AI /help
+" → vimai commands:
+"     /clear   End the current session (deletes the session file)
+"     /purge   Delete all vimai session files from the system temp directory
+"     /help    Show this help message
+"     <prompt> Send a prompt to the LLM
+```
 
 ### Loading a .env file
 
