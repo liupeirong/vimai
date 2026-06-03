@@ -14,6 +14,28 @@ interface session_log {
 ```json
 [
   {
+    "datetime": "2026-06-03 13:56",
+    "current_feature": "F04 (bug fixes)",
+    "what_was_done": [
+      "Fixed: slash commands (/help, /clear, /purge) were reaching the LLM as normal prompts on Windows Git Bash — MSYS2 converts positional args starting with '/' to Windows file paths before Python sees them",
+      "plugin/vimai.vim: detect /word pattern in s:RunAI and pass '--command <name>' (no leading slash) to Python instead of a positional arg",
+      "src/vimai/cli.py: added --command argparse flag; reconstructs '/<name>' and dispatches via handle_command(); positional /command path retained for Linux/macOS direct CLI use",
+      "tests/test_cli.py: added TestCliCommandFlag (5 tests) for --command routing",
+      "Fixed: Unicode characters (e.g. smart quotes U+2019) displayed as '~@~Y' in scratch buffer on Windows",
+      "plugin/vimai.vim: replaced system() output capture with tempname()+readfile(); readfile() reads raw bytes bypassing cmd.exe OEM code-page conversion that system() pipe is subject to",
+      "plugin/vimai.vim: /clear now calls s:ClearScratchBuffer() to wipe the scratch buffer content and show 'Session cleared.' as visual feedback",
+      "tests/vimai.vader: 3 new vader test cases for clear behaviour (content wiped, cursor stays, works without prior buffer)",
+      "Updated README.md troubleshooting table with Unicode garbling row",
+      "Updated .ai/feature-list.md F04 evidence to reflect all fixes"
+    ],
+    "decision": [
+      "--command flag is the canonical Vim→Python channel for slash commands; positional /cmd kept only for manual CLI use",
+      "readfile() is unconditional (not Windows-only) — it is simpler and also more correct on Linux/macOS where a large response could overflow system() buffers"
+    ],
+    "issues": [],
+    "next_step": "Implement next highest-priority not_started feature: F02 (Multi-line prompt via scratch buffer), F07 (Generic agent loader), or F08 (Route to named agent)."
+  },
+  {
     "datetime": "2026-06-03 13:05",
     "current_feature": "F04",
     "what_was_done": [

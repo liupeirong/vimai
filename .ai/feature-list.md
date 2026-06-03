@@ -130,12 +130,13 @@ interface feature_list {
       ],
       "evidence": [
         "src/vimai/commands.py: handle_command(), cmd_clear(), cmd_purge(), cmd_help() + HELP_TEXT constant",
-        "src/vimai/cli.py: handle_command() dispatched before LLM call; slash commands skip load_config() and invoke_chain()",
+        "src/vimai/cli.py: handle_command() dispatched before LLM call; slash commands skip load_config() and invoke_chain(); --command flag avoids MSYS2/Git Bash positional-arg path conversion",
+        "plugin/vimai.vim: s:RunAI uses tempname()+readfile() instead of system() capture to bypass Windows cmd.exe OEM code-page mangling of UTF-8 output; s:ClearScratchBuffer() wipes scratch buffer on /clear",
         "tests/test_commands.py: 17 unit tests covering all four handlers, edge cases (no session, missing file, singular/plural, unknown command, case-insensitivity, non-command passthrough)",
-        "tests/test_cli.py: 5 new integration tests (TestCliSlashCommands) verifying exit codes, stdout content, LLM skipped",
-        "pytest: 73/73 passed; ruff format + check: clean"
+        "tests/test_cli.py: 5 new integration tests (TestCliSlashCommands) + 5 (TestCliCommandFlag) verifying --command flag routing",
+        "pytest: 78/78 passed; ruff format + check: clean"
       ],
-      "notes": "Slash-prefix subcommand pattern keeps :AI as the single Vim command."
+      "notes": "Slash-prefix subcommand pattern keeps :AI as the single Vim command. Slash commands passed via --command flag (no leading /) to avoid MSYS2 path conversion."
     },
     {
       "id": "F05",
