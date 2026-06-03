@@ -103,10 +103,14 @@ function! s:RunAI(prompt) abort
   " Strip carriage returns from Windows line endings.
   call map(l:lines, 'substitute(v:val, "\\r", "", "g")')
 
-  " /clear also wipes the scratch buffer so the user gets a visual signal
-  " that the conversation history is gone.
+  " /clear: wipe scratch buffer for visual feedback and reset s:session_file
+  " so the next prompt starts a fresh session. The old session file is kept
+  " on disk (/purge is responsible for deletion).
   if l:subcmd ==# 'clear'
     call s:ClearScratchBuffer(l:lines)
+    let s:session_file = s:tmpdir .
+          \ '/vimai-session-' . strftime('%Y-%m-%d-%H-%M') .
+          \ '-' . getpid() . '.tmp'
   else
     call s:ShowInScratchBuffer(a:prompt, l:lines)
   endif

@@ -11,17 +11,19 @@ from pathlib import Path
 
 HELP_TEXT = """\
 vimai commands:
-  /clear   End the current session (deletes the session file)
+  /clear   End the current session (history is kept in the session file, but a new session starts for subsequent prompts)
   /purge   Delete all vimai session files from the system temp directory
   /help    Show this help message
   <prompt> Send a prompt to the LLM"""
 
 
-def cmd_clear(session_path: Path | None) -> str:
-    """Delete the active session file and return a confirmation message."""
-    if session_path is None or not session_path.exists():
-        return "No active session to clear."
-    session_path.unlink()
+def cmd_clear() -> str:
+    """Close the current session and return a confirmation message.
+
+    The session file is preserved on disk; the Vim plugin resets its
+    session file path so the next prompt starts a new session.
+    /purge is responsible for deleting files.
+    """
     return "Session cleared."
 
 
@@ -61,7 +63,7 @@ def handle_command(prompt: str, session_path: Path | None = None) -> str | None:
     cmd = stripped.split()[0].lower()
 
     if cmd == "/clear":
-        return cmd_clear(session_path)
+        return cmd_clear()
     if cmd == "/purge":
         return cmd_purge(str(session_path.parent) if session_path else None)
     if cmd == "/help":
