@@ -76,9 +76,20 @@ function! s:ShowInScratchBuffer(prompt, lines) abort
 endfunction
 
 function! s:RunAI(prompt) abort
-  let l:cmd = 'python ' . shellescape(s:main_script) .
-        \ ' --session ' . shellescape(s:session_file) .
-        \ ' ' . shellescape(a:prompt)
+  " Slash commands (/clear, /purge, /help) are passed via --command <name>
+  " rather than as a positional argument. This avoids MSYS2/Git Bash path
+  " conversion, which silently rewrites positional args starting with '/'
+  " to Windows file paths, causing them to reach the LLM as normal prompts.
+  let l:subcmd = matchstr(a:prompt, '^\s*/\zs\w\+\ze\s*$')
+  if l:subcmd !=# ''
+    let l:cmd = 'python ' . shellescape(s:main_script) .
+          \ ' --command ' . shellescape(l:subcmd) .
+          \ ' --session ' . shellescape(s:session_file)
+  else
+    let l:cmd = 'python ' . shellescape(s:main_script) .
+          \ ' --session ' . shellescape(s:session_file) .
+          \ ' ' . shellescape(a:prompt)
+  endif
   let l:response = system(l:cmd)
   let l:response = substitute(l:response, '\r', '', 'g')
   call s:ShowInScratchBuffer(a:prompt, split(l:response, "\n"))
