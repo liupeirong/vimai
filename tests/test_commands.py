@@ -18,23 +18,17 @@ from vimai.commands import (
 # ── cmd_clear ────────────────────────────────────────────────────────────────
 
 
-def test_clear_deletes_existing_file(tmp_path):
+def test_clear_returns_confirmation():
+    result = cmd_clear()
+    assert result == "Session cleared."
+
+
+def test_clear_does_not_delete_session_file(tmp_path):
+    """Session file must be preserved; /purge is responsible for deletion."""
     session = tmp_path / "vimai-session-test.tmp"
     session.write_text("[]")
-    result = cmd_clear(session)
-    assert result == "Session cleared."
-    assert not session.exists()
-
-
-def test_clear_no_session_path():
-    result = cmd_clear(None)
-    assert result == "No active session to clear."
-
-
-def test_clear_missing_file(tmp_path):
-    session = tmp_path / "nonexistent.tmp"
-    result = cmd_clear(session)
-    assert result == "No active session to clear."
+    cmd_clear()
+    assert session.exists()
 
 
 # ── cmd_purge ────────────────────────────────────────────────────────────────
@@ -95,7 +89,8 @@ def test_handle_clear_routes_to_cmd_clear(tmp_path):
     session.write_text("[]")
     result = handle_command("/clear", session)
     assert result == "Session cleared."
-    assert not session.exists()
+    # File must NOT be deleted — /purge is responsible for deletion.
+    assert session.exists()
 
 
 def test_handle_purge_routes_to_cmd_purge(tmp_path):

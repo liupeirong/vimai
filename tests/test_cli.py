@@ -182,7 +182,7 @@ class TestCliSessionFlag:
 class TestCliSlashCommands:
     """F04: slash commands are dispatched before any LLM call."""
 
-    def test_clear_exits_0_and_deletes_session(
+    def test_clear_exits_0_and_keeps_session_file(
         self,
         monkeypatch: pytest.MonkeyPatch,
         capsys: pytest.CaptureFixture,
@@ -197,7 +197,8 @@ class TestCliSlashCommands:
 
         assert exc_info.value.code == 0
         assert "cleared" in capsys.readouterr().out.lower()
-        assert not session.exists()
+        # Session file must be preserved; /purge is responsible for deletion.
+        assert session.exists()
 
     def test_purge_exits_0_and_deletes_files(
         self,
@@ -302,7 +303,8 @@ class TestCliCommandFlag:
 
         assert exc_info.value.code == 0
         assert "cleared" in capsys.readouterr().out.lower()
-        assert not session.exists()
+        # Session file must be preserved; /purge is responsible for deletion.
+        assert session.exists()
 
     def test_command_purge(
         self,
