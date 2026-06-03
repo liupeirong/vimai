@@ -121,14 +121,20 @@ interface feature_list {
       "area": "vim plugin",
       "title": "Session control: /clear, /purge, /help",
       "user_visible_behavior": "':AI /clear' ends session. ':AI /purge' deletes all session files. ':AI /help' lists commands.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "':AI /clear' closes active session and prints confirmation",
         "':AI /purge' deletes all vimai-session-*.tmp files and prints count",
         "':AI /help' prints all commands with descriptions",
         "Unknown /command prints error referencing /help"
       ],
-      "evidence": [],
+      "evidence": [
+        "src/vimai/commands.py: handle_command(), cmd_clear(), cmd_purge(), cmd_help() + HELP_TEXT constant",
+        "src/vimai/cli.py: handle_command() dispatched before LLM call; slash commands skip load_config() and invoke_chain()",
+        "tests/test_commands.py: 17 unit tests covering all four handlers, edge cases (no session, missing file, singular/plural, unknown command, case-insensitivity, non-command passthrough)",
+        "tests/test_cli.py: 5 new integration tests (TestCliSlashCommands) verifying exit codes, stdout content, LLM skipped",
+        "pytest: 73/73 passed; ruff format + check: clean"
+      ],
       "notes": "Slash-prefix subcommand pattern keeps :AI as the single Vim command."
     },
     {

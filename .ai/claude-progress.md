@@ -14,6 +14,29 @@ interface session_log {
 ```json
 [
   {
+    "datetime": "2026-06-03 13:05",
+    "current_feature": "F04",
+    "what_was_done": [
+      "Created src/vimai/commands.py: handle_command(), cmd_clear(), cmd_purge(), cmd_help(), HELP_TEXT",
+      "handle_command() returns None for non-slash prompts, dispatches /clear /purge /help, returns error string for unknown slash commands",
+      "cmd_clear(session_path): deletes session file if it exists; returns confirmation or 'No active session' message",
+      "cmd_purge(tmpdir?): globs vimai-session-*.tmp in session parent dir (or system tmpdir); deletes all; returns count with singular/plural",
+      "cmd_help(): returns HELP_TEXT listing all three commands plus prompt usage",
+      "Updated src/vimai/cli.py: call handle_command() before load_config()/invoke_chain(); slash commands exit 0 without touching LLM or Azure",
+      "Created tests/test_commands.py: 17 unit tests covering all handlers and edge cases",
+      "Updated tests/test_cli.py: added TestCliSlashCommands (5 tests) for CLI-level routing",
+      "pytest: 73/73 passed; ruff format + check: clean"
+    ],
+    "decision": [
+      "Slash commands implemented in Python (not Vim script) — keeps logic testable and platform-consistent",
+      "handle_command() placed in cli.py dispatch flow before config load — avoids requiring Azure env vars for /help or /clear",
+      "cmd_purge searches session file's parent directory (not getcwd) so it targets the same tmpdir the session was created in",
+      "Unknown /commands return a user-facing message (exit 0) rather than exit 1 — consistent with /help UX; not an error"
+    ],
+    "issues": [],
+    "next_step": "Implement next highest-priority not_started feature: F02 (Multi-line prompt via scratch buffer), F07 (Generic agent loader), or F08 (Route to named agent)."
+  },
+  {
     "datetime": "2026-06-02 14:09",
     "current_feature": "F01 (display UX improvements)",
     "what_was_done": [
