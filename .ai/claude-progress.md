@@ -14,7 +14,24 @@ interface session_log {
 ```json
 [
   {
-    "datetime": "2026-06-03 13:56",
+    "datetime": "2026-06-03 14:36",
+    "current_feature": "F04 (session close)",
+    "what_was_done": [
+      "Fixed: /clear was deleting the session file; correct behaviour is to close the session (reset s:session_file to a fresh path) and preserve the file on disk",
+      "src/vimai/commands.py: cmd_clear() no longer accepts session_path or deletes the file; returns 'Session cleared.' unconditionally",
+      "plugin/vimai.vim: after /clear response, regenerate s:session_file with new timestamp so next :AI starts a fresh session",
+      "HELP_TEXT updated to describe new /clear behaviour",
+      "tests/test_commands.py: replaced delete-asserts with exists-asserts; removed 'no session' / 'missing file' cases that no longer apply",
+      "tests/test_cli.py: same fix in TestCliSlashCommands and TestCliCommandFlag",
+      "pytest: 77/77 passed; ruff format + check: clean"
+    ],
+    "decision": [
+      "/clear = close session (reset path), keep file; /purge = delete files. Clean separation of concerns."
+    ],
+    "issues": [],
+    "next_step": "Implement next highest-priority not_started feature: F02 (Multi-line prompt via scratch buffer), F07 (Generic agent loader), or F08 (Route to named agent)."
+  },
+  {
     "current_feature": "F04 (bug fixes)",
     "what_was_done": [
       "Fixed: slash commands (/help, /clear, /purge) were reaching the LLM as normal prompts on Windows Git Bash — MSYS2 converts positional args starting with '/' to Windows file paths before Python sees them",
