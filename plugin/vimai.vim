@@ -90,23 +90,25 @@ function! s:RunAI(prompt) abort
           \ ' --session ' . shellescape(s:session_file) .
           \ ' ' . shellescape(a:prompt)
   endif
-  " On Windows with cmd.exe the OEM code page (e.g. CP437/CP1252) mangles
-  " UTF-8 multi-byte sequences before Vim sees them. Force UTF-8 (chcp 65001)
-  " so Python's output is passed through unchanged.
-  " win32unix (Git Bash / MSYS2) uses a POSIX shell and handles UTF-8 natively.
-  if (has('win32') || has('win64')) && !has('win32unix')
-    let l:response = system('chcp 65001 >nul 2>&1 & ' . l:cmd)
-  else
-    let l:response = system(l:cmd)
-  endif
-  let l:response = substitute(l:response, '\r', '', 'g')
+
+  " Write to a temp file and read with readfile() instead of capturing
+  " system() output directly. system() passes bytes through the shell's code
+  " page on Windows cmd.exe, mangling UTF-8 multi-byte sequences (e.g.
+  " U+2019 → '~@~Y'). readfile() reads raw bytes and sidesteps that pipeline.
+  let l:tmpfile = tempname()
+  call system(l:cmd . ' > ' . shellescape(l:tmpfile) . ' 2>&1')
+  let l:lines = readfile(l:tmpfile)
+  call delete(l:tmpfile)
+
+  " Strip carriage returns from Windows line endings.
+  call map(l:lines, 'substitute(v:val, "\\r", "", "g")')
 
   " /clear also wipes the scratch buffer so the user gets a visual signal
   " that the conversation history is gone.
   if l:subcmd ==# 'clear'
-    call s:ClearScratchBuffer(split(l:response, "\n"))
+    call s:ClearScratchBuffer(l:lines)
   else
-    call s:ShowInScratchBuffer(a:prompt, split(l:response, "\n"))
+    call s:ShowInScratchBuffer(a:prompt, l:lines)
   endif
 endfunction
 
