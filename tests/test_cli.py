@@ -1,4 +1,4 @@
-"""Unit tests for vimai.cli (F01, F03)."""
+"""Unit tests for vimai.cli (F01, F03, F04)."""
 
 import sys
 from pathlib import Path
@@ -177,3 +177,90 @@ class TestCliSessionFlag:
         call_args = mock_hist.call_args[0]
         assert isinstance(call_args[1], Path)
         assert call_args[1] == session
+
+
+class TestCliSlashCommands:
+    """F04: slash commands are dispatched before any LLM call."""
+
+    def test_clear_exits_0_and_deletes_session(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture,
+        tmp_path: Path,
+    ) -> None:
+        session = tmp_path / "vimai-session-test.tmp"
+        session.write_text("[]")
+        monkeypatch.setattr(sys, "argv", ["vimai", "--session", str(session), "/clear"])
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+
+        assert exc_info.value.code == 0
+        assert "cleared" in capsys.readouterr().out.lower()
+        assert not session.exists()
+
+    def test_purge_exits_0_and_deletes_files(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture,
+        tmp_path: Path,
+    ) -> None:
+        for i in range(2):
+            (tmp_path / f"vimai-session-2026-01-01-12-0{i}-1.tmp").write_text("[]")
+        session = tmp_path / "vimai-session-current.tmp"
+        monkeypatch.setattr(sys, "argv", ["vimai", "--session", str(session), "/purge"])
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+
+        assert exc_info.value.code == 0
+        out = capsys.readouterr().out
+        assert "purged" in out.lower()
+        assert not any(tmp_path.glob("vimai-session-*.tmp"))
+
+    def test_help_exits_0_and_prints_commands(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture,
+    ) -> None:
+        monkeypatch.setattr(sys, "argv", ["vimai", "/help"])
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+
+        assert exc_info.value.code == 0
+        out = capsys.readouterr().out
+        assert "/clear" in out
+        assert "/purge" in out
+        assert "/help" in out
+
+    def test_slash_commands_skip_llm(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture,
+    ) -> None:
+        monkeypatch.setattr(sys, "argv", ["vimai", "/help"])
+
+        with (
+            patch("vimai.cli.load_config") as mock_config,
+            patch("vimai.cli.invoke_chain") as mock_chain,
+            pytest.raises(SystemExit),
+        ):
+            main()
+
+        mock_config.assert_not_called()
+        mock_chain.assert_not_called()
+
+    def test_unknown_slash_command_exits_0_with_error_hint(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture,
+    ) -> None:
+        monkeypatch.setattr(sys, "argv", ["vimai", "/oops"])
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+
+        assert exc_info.value.code == 0
+        out = capsys.readouterr().out
+        assert "/help" in out.lower()
