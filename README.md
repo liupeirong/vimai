@@ -208,6 +208,7 @@ Get-Content .env | ForEach-Object {
 | `vimai config error: Missing required environment variable(s)` | Env vars not set | Set `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_DEPLOYMENT` before launching Vim |
 | `DefaultAzureCredential: no credentials` | Not logged in | Run `az login` |
 | Can't find session file | Unsure of exact path | Run `:AISession` in Vim; file is in `%TEMP%` on Windows or `/tmp` on Linux/macOS |
+| Unicode characters (e.g. `'`) shown as `~@~Y` | Vim version that doesn't support `readfile()` with UTF-8 | Ensure Vim is compiled with `+multi_byte` (`vim --version \| grep multi_byte`); use Vim ≥ 8.0 |
 
 ### Configuration reference
 
