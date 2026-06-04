@@ -14,6 +14,25 @@ interface session_log {
 ```json
 [
   {
+    "datetime": "2026-06-04 15:40",
+    "current_feature": "F08 (Route prompt to named agent via :AI @<name>)",
+    "what_was_done": [
+      "Added CLI routing for leading @<name> prompts so they call invoke_agent(config, name, prompt)",
+      "Added @<name> usage handling for missing prompt bodies",
+      "Updated Vim plugin command construction so :AI @<name> prompts and multiline @<name> prompt-file submissions do not pass --session",
+      "Added pytest coverage for @vi routing, arbitrary user agent routing, --session history skipping, prompt-file routing, and missing prompt usage",
+      "Added Vader coverage for VimScript agent prompt detection",
+      "Updated README.md with :AI @<name> usage and stateless history behaviour",
+      "Recorded F08 as passing in .ai/feature-list.md"
+    ],
+    "decision": [
+      "Use a leading @<name> directive in the prompt rather than a separate CLI flag so direct CLI, :AI, and prompt-file submissions share the same syntax",
+      "Treat agent calls as stateless even when --session is present by routing before invoke_chain_with_history(); Vim also omits --session for leading @ prompts"
+    ],
+    "issues": [],
+    "next_step": "Implement next highest-priority unfinished feature: F06 (LangSmith tracing) or F10 (distribution)."
+  },
+  {
     "datetime": "2026-06-04 15:31",
     "current_feature": "feature-list maintenance",
     "what_was_done": [

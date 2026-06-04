@@ -1,7 +1,8 @@
-" vimai.vim - Vim plugin for inline LLM queries (F01, F02, F03, F04)
+" vimai.vim - Vim plugin for inline LLM queries (F01, F02, F03, F04, F08)
 "
 " Usage:
 "   :AI <prompt>     Send a prompt to the LLM; response opens in a vertical split
+"   :AI @vi <prompt> Send a stateless prompt to a named agent
 "   <leader>ai       Open a scratch buffer for a multi-line prompt
 "   <leader>s        Submit from the multi-line prompt buffer
 "   :ai <prompt>     Alias (cabbrev) for :AI
@@ -149,6 +150,7 @@ function! s:RunAI(prompt) abort
   " conversion, which silently rewrites positional args starting with '/'
   " to Windows file paths, causing them to reach the LLM as normal prompts.
   let l:subcmd = matchstr(a:prompt, '^\s*/\zs\w\+\ze\s*$')
+  let l:is_agent_prompt = s:IsAgentPrompt(a:prompt)
   let l:promptfile = ''
   if l:subcmd !=# ''
     let l:cmd = 'python ' . shellescape(s:main_script) .
@@ -157,13 +159,17 @@ function! s:RunAI(prompt) abort
   elseif a:prompt =~# "\n"
     let l:promptfile = tempname()
     call writefile(split(a:prompt, "\n", 1), l:promptfile)
-    let l:cmd = 'python ' . shellescape(s:main_script) .
-          \ ' --session ' . shellescape(s:session_file) .
-          \ ' --prompt-file ' . shellescape(l:promptfile)
+    let l:cmd = 'python ' . shellescape(s:main_script)
+    if !l:is_agent_prompt
+      let l:cmd .= ' --session ' . shellescape(s:session_file)
+    endif
+    let l:cmd .= ' --prompt-file ' . shellescape(l:promptfile)
   else
-    let l:cmd = 'python ' . shellescape(s:main_script) .
-          \ ' --session ' . shellescape(s:session_file) .
-          \ ' ' . shellescape(a:prompt)
+    let l:cmd = 'python ' . shellescape(s:main_script)
+    if !l:is_agent_prompt
+      let l:cmd .= ' --session ' . shellescape(s:session_file)
+    endif
+    let l:cmd .= ' ' . shellescape(a:prompt)
   endif
 
   " Write to a temp file and read with readfile() instead of capturing
@@ -192,6 +198,10 @@ function! s:RunAI(prompt) abort
   else
     call s:ShowInScratchBuffer(a:prompt, l:lines)
   endif
+endfunction
+
+function! s:IsAgentPrompt(prompt) abort
+  return a:prompt =~# '^\s*@'
 endfunction
 
 " Replace the scratch buffer contents with msg_lines and mark it read-only.
@@ -274,4 +284,8 @@ endfunction
 
 function! VimaiTestSubmittedPrompt() abort
   return s:test_submitted_prompt
+endfunction
+
+function! VimaiTestIsAgentPrompt(prompt) abort
+  return s:IsAgentPrompt(a:prompt)
 endfunction

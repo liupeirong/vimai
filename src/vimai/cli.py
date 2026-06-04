@@ -1,4 +1,4 @@
-"""CLI entry point called by Vim via :! shell integration (F01, F03, F04).
+"""CLI entry point called by Vim via :! shell integration (F01, F03, F04, F08).
 
 Usage:
     python main.py '<prompt>'
@@ -6,6 +6,7 @@ Usage:
     python main.py --command clear --session /tmp/vimai-session-....tmp
     python main.py --command purge --session /tmp/vimai-session-....tmp
     python main.py --command help
+    python main.py '@vi <prompt>'
 
     The Vim plugin passes slash commands via --command <name> (without the
     leading /) to avoid MSYS2/Git Bash converting '/word' positional args
@@ -19,7 +20,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from .chain import invoke_chain, invoke_chain_with_history
+from .chain import invoke_agent, invoke_chain, invoke_chain_with_history
 from .commands import handle_command
 from .config import ConfigError, load_config
 
@@ -46,6 +47,18 @@ def _resolve_prompt(args: argparse.Namespace) -> str | None:
     if args.prompt_file:
         return Path(args.prompt_file).read_text(encoding="utf-8")
     return args.prompt
+
+
+def _split_agent_prompt(prompt: str) -> tuple[str, str] | None:
+    """Return (agent_name, prompt) for leading @agent prompts, else None."""
+    stripped = prompt.strip()
+    if not stripped.startswith("@"):
+        return None
+
+    parts = stripped.split(maxsplit=1)
+    agent_name = parts[0].removeprefix("@")
+    agent_prompt = parts[1].strip() if len(parts) == 2 else ""
+    return agent_name, agent_prompt
 
 
 def main() -> None:
@@ -83,9 +96,18 @@ def main() -> None:
         print(cmd_output)
         sys.exit(0)
 
+    agent_route = _split_agent_prompt(prompt)
+    if agent_route is not None:
+        agent_name, agent_prompt = agent_route
+        if not agent_name or not agent_prompt:
+            print("Usage: vimai '@<agent> <prompt>'", file=sys.stderr)
+            sys.exit(1)
+
     try:
         config = load_config()
-        if session_path:
+        if agent_route is not None:
+            response = invoke_agent(config, agent_name, agent_prompt)
+        elif session_path:
             response = invoke_chain_with_history(config, session_path, prompt)
         else:
             response = invoke_chain(config, prompt)

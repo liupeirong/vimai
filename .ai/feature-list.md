@@ -217,7 +217,7 @@ interface feature_list {
       "area": "vim plugin",
       "title": "Route prompt to named agent via :AI @<name>",
       "user_visible_behavior": "':AI @vi <prompt>' loads the vi agent and answers inline. ':AI @git <prompt>' loads a git agent, etc. Stateless single-turn, does not modify the current session.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "':AI @vi <prompt>' loads vi.md system prompt and returns response",
         "':AI @<name> <prompt>' works for any agent file in ~/.vimai/agents/",
@@ -225,8 +225,15 @@ interface feature_list {
         "Active session is not modified",
         "':AI @<name>' with no prompt prints usage hint"
       ],
-      "evidence": [],
-      "notes": "Single-turn stateless. @<name> pattern is the extension point for future agent ecosystem integration."
+      "evidence": [
+        "src/vimai/cli.py: leading @<name> prompts route to invoke_agent(config, name, prompt) instead of invoke_chain()/invoke_chain_with_history()",
+        "src/vimai/cli.py: @<name> without a body exits with usage hint: Usage: vimai '@<agent> <prompt>'",
+        "plugin/vimai.vim: :AI @<name> prompts and multiline @<name> prompt-file submissions omit --session, so agent calls are stateless from Vim",
+        "tests/test_cli.py: 4 F08 unit tests cover @vi routing, arbitrary @git routing with --session skipping history, prompt-file routing, and missing-body usage",
+        "tests/vimai.vader: agent prompt detection coverage added for VimScript routing helper",
+        "uv run ruff format . && uv run ruff check . && uv run pytest: 98/98 passed"
+      ],
+      "notes": "Single-turn stateless. @<name> pattern is the extension point for future agent ecosystem integration. Agent responses reuse the existing [AI Response] split display."
     },
     {
       "id": "F10",
