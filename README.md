@@ -51,7 +51,7 @@ set runtimepath+=C:/tools/vimai
 
 ### Step 4 — Set environment variables
 
-vimai needs to know which Azure OpenAI resource and deployment to call.
+vimai needs to know which Azure AI Foundry endpoint and deployment to call.
 Set these in your shell **before** launching Vim:
 
 ```sh
@@ -67,6 +67,11 @@ set AZURE_OPENAI_DEPLOYMENT=<your-deployment-name>
 $env:AZURE_OPENAI_ENDPOINT = "https://<your-resource>.openai.azure.com/"
 $env:AZURE_OPENAI_DEPLOYMENT = "<your-deployment-name>"
 ```
+
+vimai automatically appends `/openai/v1/` to the endpoint to use the
+[Azure AI Foundry unified inference API](https://learn.microsoft.com/en-us/azure/ai-foundry/),
+which supports OpenAI, Llama, DeepSeek, Mistral, and Phi deployments
+through a single interface.
 
 You can store these in a `.env` file and load them each session (see [Loading a .env file](#loading-a-env-file)).
 
@@ -156,7 +161,7 @@ Use slash commands to manage your session without making an LLM call:
 
 | Command | What it does |
 | --- | --- |
-| `:AI /clear` | End the current session (deletes the session file) |
+| `:AI /clear` | Close the current session and wipe the scratch buffer; session file is kept on disk |
 | `:AI /purge` | Delete **all** `vimai-session-*.tmp` files from your temp directory |
 | `:AI /help` | List all available commands |
 
@@ -169,7 +174,7 @@ Use slash commands to manage your session without making an LLM call:
 
 :AI /help
 " → vimai commands:
-"     /clear   End the current session (deletes the session file)
+"     /clear   Close the current session and clear the scratch buffer
 "     /purge   Delete all vimai session files from the system temp directory
 "     /help    Show this help message
 "     <prompt> Send a prompt to the LLM
@@ -214,9 +219,8 @@ Get-Content .env | ForEach-Object {
 
 | Environment variable        | Required | Default              | Description                          |
 | --------------------------- | -------- | -------------------- | ------------------------------------ |
-| `AZURE_OPENAI_ENDPOINT`     | Yes      | —                    | Azure OpenAI resource endpoint URL   |
+| `AZURE_OPENAI_ENDPOINT`     | Yes      | —                    | Azure AI Foundry resource base URL (e.g. `https://<name>.openai.azure.com/`) |
 | `AZURE_OPENAI_DEPLOYMENT`   | Yes      | —                    | Model deployment name                |
-| `AZURE_OPENAI_API_VERSION`  | No       | `2024-05-01-preview` | Azure OpenAI REST API version        |
 
 ---
 
