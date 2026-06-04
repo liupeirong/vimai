@@ -24,7 +24,7 @@ interface feature_list {
 
 ```json
 {
-  "last_updated": "2026-06-01 13:45",
+  "last_updated": "2026-06-03 17:34",
   "feature": [
     {
       "id": "infra-001",
@@ -155,12 +155,12 @@ interface feature_list {
       ],
       "evidence": [
         "src/vimai/config.py: Config dataclass + ConfigError + load_config() implemented",
-        "src/vimai/llm.py: build_llm() uses DefaultAzureCredential via get_bearer_token_provider",
+        "src/vimai/llm.py: build_llm() uses sync DefaultAzureCredential + get_bearer_token_provider; ChatOpenAI with base_url set to {endpoint}/openai/v1/ for Azure AI Foundry unified inference API",
         "tests/test_config.py: 11 unit tests covering all env var cases, whitespace, defaults",
-        "tests/test_llm.py: 5 unit tests with mocked credentials, no real Azure calls",
-        "pytest: 17/17 passed; ruff format + check: clean"
+        "tests/test_llm.py: 7 unit tests with mocked credentials — assert ChatOpenAI type, correct base_url/model, cognitive scope, trailing-slash normalisation",
+        "pytest: 79/79 passed; ruff format + check: clean"
       ],
-      "notes": "azure-identity already in pyproject.toml. Add langchain-openai."
+      "notes": "Uses ChatOpenAI (not AzureChatOpenAI) per LangChain recommendation for Azure AI Foundry openai/v1 API. AZURE_OPENAI_API_VERSION is no longer required; endpoint + deployment are the only required vars."
     },
     {
       "id": "F06",
