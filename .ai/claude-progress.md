@@ -14,6 +14,22 @@ interface session_log {
 ```json
 [
   {
+    "datetime": "2026-06-04 10:23",
+    "current_feature": "F02 (post-implementation mapping fix)",
+    "what_was_done": [
+      "Diagnosed automatic multi-line prompt submission as an insert-mode <leader>s mapping collision",
+      "Removed the insert-mode <leader>s mapping from [AI Prompt]; submission is now normal-mode-only",
+      "Updated README.md to tell users to leave Insert mode with Esc before pressing <leader>s",
+      "Updated tests/vimai.vader to assert no insert-mode submit mapping exists",
+      "Updated .ai/feature-list.md F02 notes and evidence"
+    ],
+    "decision": [
+      "Do not map <leader>s in insert mode because users commonly set mapleader to Space, which makes ordinary text like ' something' trigger submission"
+    ],
+    "issues": [],
+    "next_step": "Run validation and commit the F02 mapping fix."
+  },
+  {
     "datetime": "2026-06-04 06:26",
     "current_feature": "F02 (Multi-line prompt via scratch buffer)",
     "what_was_done": [

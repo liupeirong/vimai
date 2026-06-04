@@ -89,7 +89,7 @@ interface feature_list {
       ],
       "evidence": [
         "plugin/vimai.vim: <leader>ai opens [AI Prompt] scratch buffer via :AIPrompt / <Plug>(vimai-prompt)",
-        "plugin/vimai.vim: prompt buffer has buffer-local normal/insert <leader>s mapping to submit multiline content",
+        "plugin/vimai.vim: prompt buffer has buffer-local normal-mode <leader>s mapping to submit multiline content",
         "plugin/vimai.vim: prompt buffer is closed and wiped after submission; response is shown in [AI Response]",
         "src/vimai/cli.py: --prompt-file reads UTF-8 multiline prompts so Vim does not pass embedded newlines through shell arguments",
         "tests/test_cli.py: 2 prompt-file unit tests",
@@ -97,7 +97,7 @@ interface feature_list {
         "uv run ruff format . && uv run ruff check . && uv run pytest: 81/81 passed",
         "Direct Vim smoke test via sourced plugin and stdin-driven ex commands wrote 'ok': prompt buffer opens, buffer-local <leader>s exists, multiline content is preserved, prompt buffer is wiped, response buffer displays prompt/response, and cursor returns"
       ],
-      "notes": "Buffer-local <leader>s mapping does not leak to other buffers. <leader>ai is installed only when no existing mapping targets <Plug>(vimai-prompt). Full Vader suite still requires vader.vim installation."
+      "notes": "Buffer-local <leader>s mapping does not leak to other buffers. Submission is normal-mode-only to avoid accidental sends while typing, especially when mapleader is Space. <leader>ai is installed only when no existing mapping targets <Plug>(vimai-prompt). Full Vader suite still requires vader.vim installation."
     },
     {
       "id": "F03",
