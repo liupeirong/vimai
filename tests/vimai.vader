@@ -135,6 +135,7 @@ Execute (multi-line prompt keymap opens prompt scratch buffer):
   AssertEqual 'nofile', &buftype, "prompt buffer should be a scratch buffer"
   Assert &modifiable, "prompt buffer should be editable"
   Assert maparg('<leader>s', 'n') =~# 'SubmitPromptBuffer', "missing buffer-local submit mapping"
+  AssertEqual '', maparg('<leader>s', 'i'), "insert-mode submit mapping should not exist"
   AssertNotEqual orig_winid, win_getid(), "cursor should move into prompt buffer for editing"
 
 Execute (multi-line prompt submit displays response and wipes prompt buffer):

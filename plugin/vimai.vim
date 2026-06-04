@@ -115,8 +115,7 @@ function! s:OpenPromptBuffer() abort
 
   setlocal modifiable
   nnoremap <silent> <buffer> <leader>s :<C-U>call <SID>SubmitPromptBuffer()<CR>
-  inoremap <silent> <buffer> <leader>s <Esc>:<C-U>call <SID>SubmitPromptBuffer()<CR>
-  echo 'Type a prompt, then press <leader>s to submit.'
+  echo 'Type a prompt, leave Insert mode, then press <leader>s to submit.'
 endfunction
 
 function! s:SubmitPromptBuffer() abort
