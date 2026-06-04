@@ -1,9 +1,10 @@
-"""LangChain invocation against Azure OpenAI (F01, F03)."""
+"""LangChain invocation against Azure OpenAI (F01, F03, F07)."""
 
 from pathlib import Path
 
-from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 
+from .agents import load_agent
 from .config import Config
 from .llm import build_llm
 from .session import SessionEntry, load_session, save_session
@@ -70,3 +71,29 @@ def invoke_chain_with_history(
     save_session(session_path, history)
 
     return response_text
+
+
+def invoke_agent(config: Config, agent_name: str, prompt: str) -> str:
+    """Send a stateless single-turn prompt using a named agent system prompt.
+
+    Args:
+        config: Validated configuration from load_config().
+        agent_name: Agent name without the leading @.
+        prompt: The user's prompt text.
+
+    Returns:
+        The LLM response as a plain string.
+
+    Raises:
+        AgentNotFoundError: If no matching user or built-in agent prompt exists.
+        Any exception raised by the underlying LLM client is propagated.
+    """
+    agent = load_agent(agent_name)
+    llm = build_llm(config)
+    response = llm.invoke(
+        [
+            SystemMessage(content=agent.system_prompt),
+            HumanMessage(content=prompt),
+        ]
+    )
+    return str(response.content)

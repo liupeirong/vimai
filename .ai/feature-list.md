@@ -24,7 +24,7 @@ interface feature_list {
 
 ```json
 {
-  "last_updated": "2026-06-04 06:26",
+  "last_updated": "2026-06-04 13:19",
   "feature": [
     {
       "id": "infra-001",
@@ -191,7 +191,7 @@ interface feature_list {
       "area": "agents",
       "title": "Generic agent loader from system prompt file",
       "user_visible_behavior": "Agents are defined as plain Markdown system prompt files in ~/.vimai/agents/<name>.md. The plugin ships a built-in vi.md. Users can author their own or copy definitions from Claude, Copilot, Codex, etc.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "Agent loader reads ~/.vimai/agents/<name>.md as system prompt",
         "Built-in vi.md ships with the plugin (Vim expert system prompt)",
@@ -199,8 +199,17 @@ interface feature_list {
         "Missing agent file produces a clear error: 'No agent found for @<name>. Create ~/.vimai/agents/<name>.md'",
         "Agent loader unit-testable with mocked LLM and temp file fixtures"
       ],
-      "evidence": [],
-      "notes": "No hardcoded agent logic in Python. The Claude/Copilot/Codex reuse story is: copy their .instructions.md or SKILL.md into ~/.vimai/agents/. Future milestone will formalize that import flow."
+      "evidence": [
+        "src/vimai/agents/loader.py: load_agent() normalizes @name, reads ~/.vimai/agents/<name>.md first, falls back to importlib.resources bundled prompts, and raises AgentNotFoundError with the required creation hint",
+        "src/vimai/builtin_agents/vi.md: bundled Vim expert system prompt",
+        "pyproject.toml: package-data includes vimai.builtin_agents/*.md so bundled prompt files ship in built wheels",
+        "src/vimai/chain.py: invoke_agent() sends SystemMessage(agent.system_prompt) followed by HumanMessage(prompt) for stateless single-turn agent calls",
+        "tests/test_agents.py: temp-file fixtures cover user agents, @name normalization, built-in vi fallback, user override, missing-agent error, and invalid names",
+        "tests/test_chain.py: mocked LLM coverage for invoke_agent message order, config usage, and loader error propagation",
+        "uv run pytest: 94/94 passed",
+        "uv build wheel inspection: vimai/builtin_agents/vi.md present"
+      ],
+      "notes": "No hardcoded agent logic in Python. The Claude/Copilot/Codex reuse story is: copy their .instructions.md or SKILL.md into ~/.vimai/agents/. F08 will expose :AI @<name> routing through Vim/CLI."
     },
     {
       "id": "F08",

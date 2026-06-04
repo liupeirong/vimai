@@ -9,17 +9,19 @@
 src/vimai/
   __init__.py
   config.py         # Env var loading + validation (F05)
-  llm.py            # AzureChatOpenAI setup with DefaultAzureCredential (F05)
+  llm.py            # ChatOpenAI setup with DefaultAzureCredential (F05)
   session.py        # Session file lifecycle - create, append, close, purge (F03)
   chain.py          # LangChain chain invocation with session history (F01)
   commands.py       # /clear, /purge, /help subcommand handlers (F04)
   cli.py            # CLI entry point called by Vim via :! shell (F01)
   agents/
     __init__.py
-    loader.py         # Loads ~/.vimai/agents/<name>.md as system prompt (F07)
+    loader.py       # Loads ~/.vimai/agents/<name>.md as system prompt (F07)
+  builtin_agents/
+    vi.md           # Bundled Vim expert system prompt (F07)
 
 ~/.vimai/agents/
-  vi.md               # Built-in Vim expert system prompt (ships with plugin)
+  <name>.md         # User-defined agents; overrides bundled agents by name
 
 plugin/
   vimai.vim         # Vim plugin: :AI command, cabbrev, scratch buffer, autocommand (F01,F02,F04,F08)
@@ -30,7 +32,7 @@ tests/
   test_session.py
   test_chain.py
   test_commands.py
-  test_vi_agent.py
+  test_agents.py
   e2e/
     test_e2e.py     # Gated behind RUN_E2E=1
 ```
@@ -39,9 +41,9 @@ tests/
 
 - **Config** (`config.py`): Dataclass holding all env var values. Raises `ConfigError` with clear message if required vars are missing.
 - **Session** (`session.py`): Manages one active JSON tmp file per Vim PID. Entries are `{role, content, timestamp}`. Exposes `get_or_create()`, `append()`, `clear()`, `purge_all()`.
-- **Chain** (`chain.py`): Wraps LangChain `AzureChatOpenAI`. Accepts a list of session messages + new prompt, returns response string.
+- **Chain** (`chain.py`): Wraps LangChain `ChatOpenAI`. Accepts a list of session messages + new prompt, returns response string.
 - **CLI** (`cli.py`): Parses `sys.argv`, dispatches to chain or subcommands, prints to stdout (Vim reads this as `:!` output).
-- **Vi Agent** (`agents/vi_agent.py`): LangGraph `ReAct` agent with a Vim-expert system prompt. Stateless single-turn.
+- **Agent loader** (`agents/loader.py`): Loads `~/.vimai/agents/<name>.md` first, then falls back to bundled prompts such as `builtin_agents/vi.md`. Agent calls are stateless single-turn.
 
 ## Data Flow
 
@@ -55,7 +57,7 @@ User types: :AI <prompt>
   → Vim: displays stdout in command window (same as :!ls)
 
 User types: :AI @vi <prompt>
-  → cli.py: detect @vi prefix → invoke vi_agent.py (stateless)
+  → F08: Vim/CLI routing detects @vi → invoke_agent("vi", prompt)
   → no session file modified
 
 User types: :AI /clear
