@@ -17,19 +17,17 @@ def config() -> Config:
     return Config(
         endpoint="https://my.openai.azure.com/",
         deployment="gpt-4o",
-        api_version="2024-05-01-preview",
     )
 
 
 class TestBuildLlm:
-    def test_returns_azure_chat_openai(self, config: Config) -> None:
-        from langchain_openai import AzureChatOpenAI
+    def test_returns_chat_openai(self, config: Config) -> None:
+        from langchain_openai import AzureChatOpenAI, ChatOpenAI
 
-        mock_credential = MagicMock()
         mock_token_provider = MagicMock()
 
         with (
-            patch("vimai.llm.DefaultAzureCredential", return_value=mock_credential),
+            patch("vimai.llm.DefaultAzureCredential", return_value=MagicMock()),
             patch(
                 "vimai.llm.get_bearer_token_provider",
                 return_value=mock_token_provider,
@@ -37,7 +35,8 @@ class TestBuildLlm:
         ):
             llm = build_llm(config)
 
-        assert isinstance(llm, AzureChatOpenAI)
+        assert isinstance(llm, ChatOpenAI)
+        assert not isinstance(llm, AzureChatOpenAI)
 
     def test_uses_default_azure_credential(self, config: Config) -> None:
         mock_credential = MagicMock()
@@ -76,9 +75,9 @@ class TestBuildLlm:
         ):
             llm = build_llm(config)
 
-        assert llm.azure_endpoint == config.endpoint
-        assert llm.deployment_name == config.deployment
-        assert llm.openai_api_version == config.api_version
+        expected_base_url = config.endpoint.rstrip("/") + "/openai/v1/"
+        assert llm.openai_api_base == expected_base_url
+        assert llm.model_name == config.deployment
 
     def test_no_api_key_used(self, config: Config) -> None:
         with (
@@ -91,3 +90,28 @@ class TestBuildLlm:
         api_key_value = llm.openai_api_key
         secret_value = api_key_value.get_secret_value() if api_key_value else None
         assert secret_value != "some-secret-key"
+
+    def test_base_url_has_v1_suffix(self, config: Config) -> None:
+        with (
+            patch("vimai.llm.DefaultAzureCredential", return_value=MagicMock()),
+            patch("vimai.llm.get_bearer_token_provider", return_value=MagicMock()),
+        ):
+            llm = build_llm(config)
+
+        assert llm.openai_api_base is not None
+        assert "/openai/v1/" in llm.openai_api_base
+
+    def test_base_url_normalises_trailing_slash(self) -> None:
+        """Endpoint with or without trailing slash both produce /openai/v1/ suffix."""
+        with (
+            patch("vimai.llm.DefaultAzureCredential", return_value=MagicMock()),
+            patch("vimai.llm.get_bearer_token_provider", return_value=MagicMock()),
+        ):
+            llm_with = build_llm(
+                Config(endpoint="https://my.openai.azure.com/", deployment="m")
+            )
+            llm_without = build_llm(
+                Config(endpoint="https://my.openai.azure.com", deployment="m")
+            )
+
+        assert llm_with.openai_api_base == llm_without.openai_api_base
