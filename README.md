@@ -13,7 +13,6 @@ A Vim plugin that lets you query an LLM inline, directly from inside Vim.
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) — Python package manager
 - An Azure OpenAI resource with a deployed model
 - Azure CLI for authentication — install from [aka.ms/installazurecli](https://aka.ms/installazurecli)
-- A LangSmith API key for required trace capture
 
 ### Step 1 — Get the code
 
@@ -52,25 +51,21 @@ set runtimepath+=C:/tools/vimai
 
 ### Step 4 — Set environment variables
 
-vimai needs to know which Azure AI Foundry endpoint and deployment to call,
-and which LangSmith account should receive traces. Set these in your shell
-**before** launching Vim:
+vimai needs to know which Azure AI Foundry endpoint and deployment to call.
+Set these in your shell **before** launching Vim:
 
 ```sh
 # Linux / macOS
 export AZURE_OPENAI_ENDPOINT="https://<your-resource>.openai.azure.com/"
 export AZURE_OPENAI_DEPLOYMENT="<your-deployment-name>"
-export LANGSMITH_API_KEY="<your-langsmith-api-key>"
 
 # Windows (cmd)
 set AZURE_OPENAI_ENDPOINT=https://<your-resource>.openai.azure.com/
 set AZURE_OPENAI_DEPLOYMENT=<your-deployment-name>
-set LANGSMITH_API_KEY=<your-langsmith-api-key>
 
 # Windows (PowerShell)
 $env:AZURE_OPENAI_ENDPOINT = "https://<your-resource>.openai.azure.com/"
 $env:AZURE_OPENAI_DEPLOYMENT = "<your-deployment-name>"
-$env:LANGSMITH_API_KEY = "<your-langsmith-api-key>"
 ```
 
 vimai automatically appends `/openai/v1/` to the endpoint to use the
@@ -84,11 +79,12 @@ current working directory or from the plugin checkout root:
 ```dotenv
 AZURE_OPENAI_ENDPOINT=https://<your-resource>.openai.azure.com/
 AZURE_OPENAI_DEPLOYMENT=<your-deployment-name>
-LANGSMITH_API_KEY=<your-langsmith-api-key>
 ```
 
-LangSmith tracing is required and enabled automatically for every LLM call.
-If `LANGSMITH_PROJECT` is not set, traces are recorded under the `vimai` project.
+LangSmith tracing is optional. If you have a LangSmith subscription, add
+`LANGSMITH_API_KEY` to your environment or `.env`; vimai enables tracing
+automatically when the key is present. If `LANGSMITH_PROJECT` is not set,
+traces are recorded under the `vimai` project.
 
 ### Step 5 — Activate the Python virtual environment
 
@@ -254,7 +250,7 @@ Get-Content .env | ForEach-Object {
 | `Not an editor command: AI` | `.vimrc` change not applied | Restart Vim — don't just `:source .vimrc` |
 | `python: command not found` | Venv not activated | Activate `.venv` before launching Vim (Step 5) |
 | `ModuleNotFoundError: langchain_openai` | Wrong Python in use | Activate `.venv` before launching Vim (Step 5) |
-| `vimai config error: Missing required environment variable(s)` | Env vars not set | Set `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_DEPLOYMENT`, and `LANGSMITH_API_KEY` before launching Vim |
+| `vimai config error: Missing required environment variable(s)` | Env vars not set | Set `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_DEPLOYMENT` before launching Vim |
 | `DefaultAzureCredential: no credentials` | Not logged in | Run `az login` |
 | Can't find session file | Unsure of exact path | Run `:AISession` in Vim; file is in `%TEMP%` on Windows or `/tmp` on Linux/macOS |
 | Unicode characters (e.g. `'`) shown as `~@~Y` | Vim version that doesn't support `readfile()` with UTF-8 | Ensure Vim is compiled with `+multi_byte` (`vim --version \| grep multi_byte`); use Vim ≥ 8.0 |
@@ -265,7 +261,7 @@ Get-Content .env | ForEach-Object {
 | --------------------------- | -------- | -------------------- | ------------------------------------ |
 | `AZURE_OPENAI_ENDPOINT`     | Yes      | —                    | Azure AI Foundry resource base URL (e.g. `https://<name>.openai.azure.com/`) |
 | `AZURE_OPENAI_DEPLOYMENT`   | Yes      | —                    | Model deployment name                |
-| `LANGSMITH_API_KEY`         | Yes      | —                    | LangSmith API key used for required tracing |
+| `LANGSMITH_API_KEY`         | No       | —                    | Enables LangSmith tracing when set   |
 | `LANGSMITH_PROJECT`         | No       | `vimai`              | LangSmith project that receives traces |
 
 ---
@@ -326,8 +322,8 @@ Or from inside Vim with vader.vim installed:
 RUN_E2E=1 uv run pytest -m e2e
 ```
 
-Requires `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_DEPLOYMENT`, `LANGSMITH_API_KEY`,
-and an active Azure login.
+Requires `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_DEPLOYMENT`, and an active Azure login.
+Set `LANGSMITH_API_KEY` to include LangSmith traces during the e2e run.
 
 ### Linting
 

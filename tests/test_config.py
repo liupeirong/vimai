@@ -23,7 +23,7 @@ def isolated_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setattr(
         "vimai.config._DEFAULT_DOTENV_PATHS", (tmp_path / "missing.env",)
     )
-    monkeypatch.setenv("LANGSMITH_API_KEY", "lsv2_test_key")
+    monkeypatch.delenv("LANGSMITH_API_KEY", raising=False)
     monkeypatch.delenv("LANGSMITH_TRACING", raising=False)
     monkeypatch.delenv("LANGCHAIN_TRACING_V2", raising=False)
     monkeypatch.delenv("LANGSMITH_PROJECT", raising=False)
@@ -73,18 +73,6 @@ class TestLoadConfig:
             load_config()
 
         assert "AZURE_OPENAI_ENDPOINT" in str(exc_info.value)
-
-    def test_raises_when_langsmith_api_key_missing(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        monkeypatch.setenv("AZURE_OPENAI_ENDPOINT", "https://my.openai.azure.com/")
-        monkeypatch.setenv("AZURE_OPENAI_DEPLOYMENT", "gpt-4o")
-        monkeypatch.delenv("LANGSMITH_API_KEY", raising=False)
-
-        with pytest.raises(ConfigError) as exc_info:
-            load_config()
-
-        assert "LANGSMITH_API_KEY" in str(exc_info.value)
 
     def test_raises_when_deployment_missing(
         self, monkeypatch: pytest.MonkeyPatch
@@ -156,9 +144,30 @@ class TestLoadConfig:
 
         assert os.environ["LANGSMITH_API_KEY"] == "lsv2_from_dotenv"
 
+    def test_loads_azure_vars_from_dotenv(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        env_file = tmp_path / ".env"
+        env_file.write_text(
+            "\n".join(
+                [
+                    "AZURE_OPENAI_ENDPOINT=https://dotenv.openai.azure.com/",
+                    "AZURE_OPENAI_DEPLOYMENT=dotenv-deployment",
+                ]
+            ),
+            encoding="utf-8",
+        )
+        monkeypatch.setattr("vimai.config._DEFAULT_DOTENV_PATHS", (env_file,))
+
+        config = load_config()
+
+        assert config.endpoint == "https://dotenv.openai.azure.com/"
+        assert config.deployment == "dotenv-deployment"
+
     def test_enables_langsmith_tracing(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("AZURE_OPENAI_ENDPOINT", "https://my.openai.azure.com/")
         monkeypatch.setenv("AZURE_OPENAI_DEPLOYMENT", "gpt-4o")
+        monkeypatch.setenv("LANGSMITH_API_KEY", "lsv2_test_key")
         monkeypatch.setenv("LANGSMITH_TRACING", "false")
         monkeypatch.setenv("LANGCHAIN_TRACING_V2", "false")
 
@@ -168,21 +177,18 @@ class TestLoadConfig:
         assert os.environ["LANGCHAIN_TRACING_V2"] == "true"
         assert os.environ["LANGSMITH_PROJECT"] == _DEFAULT_LANGSMITH_PROJECT
 
-    def test_dotenv_parse_errors_are_user_visible(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    def test_langsmith_key_absent_does_not_enable_tracing(
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        env_file = tmp_path / ".env"
-        env_file.write_text("LANGSMITH_API_KEY\n", encoding="utf-8")
-        monkeypatch.setattr("vimai.config._DEFAULT_DOTENV_PATHS", (env_file,))
         monkeypatch.setenv("AZURE_OPENAI_ENDPOINT", "https://my.openai.azure.com/")
         monkeypatch.setenv("AZURE_OPENAI_DEPLOYMENT", "gpt-4o")
-        monkeypatch.delenv("LANGSMITH_API_KEY", raising=False)
 
-        with pytest.raises(ConfigError) as exc_info:
-            load_config()
+        config = load_config()
 
-        assert ".env" in str(exc_info.value)
-        assert "KEY=VALUE" in str(exc_info.value)
+        assert config.deployment == "gpt-4o"
+        assert "LANGSMITH_TRACING" not in os.environ
+        assert "LANGCHAIN_TRACING_V2" not in os.environ
+        assert "LANGSMITH_PROJECT" not in os.environ
 
 
 class TestConfig:

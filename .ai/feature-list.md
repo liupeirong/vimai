@@ -24,7 +24,7 @@ interface feature_list {
 
 ```json
 {
-  "last_updated": "2026-06-04 16:06",
+  "last_updated": "2026-06-04 16:40",
   "feature": [
     {
       "id": "infra-001",
@@ -175,23 +175,24 @@ interface feature_list {
       "id": "F06",
       "priority": 1,
       "area": "observability",
-      "title": "Required LangSmith tracing",
-      "user_visible_behavior": "Every LLM call is traced to LangSmith. Users provide LANGSMITH_API_KEY directly or in .env; vimai enables tracing automatically.",
+      "title": "LangSmith tracing when configured",
+      "user_visible_behavior": "When users provide LANGSMITH_API_KEY directly or in .env, vimai enables LangSmith tracing automatically. Without a key, vimai continues to work normally without tracing.",
       "status": "passing",
       "verification": [
-        "LANGSMITH_API_KEY is required and missing values produce a clear config error",
-        ".env files are loaded from the current working directory or plugin checkout root",
-        "LangSmith tracing flags are enabled automatically before LLM calls",
-        "LANGSMITH_PROJECT defaults to vimai when absent",
+        ".env files are loaded with python-dotenv from the current working directory or plugin checkout root",
+        "LANGSMITH_API_KEY is optional; missing values do not block LLM calls",
+        "LangSmith tracing flags are enabled automatically before LLM calls when LANGSMITH_API_KEY is set",
+        "LANGSMITH_PROJECT defaults to vimai when tracing is enabled and project is absent",
         "No LangSmith API key is stored in source code or the Config dataclass"
       ],
       "evidence": [
-        "src/vimai/config.py: load_config() loads .env, requires LANGSMITH_API_KEY, enables LANGSMITH_TRACING and LANGCHAIN_TRACING_V2, and defaults LANGSMITH_PROJECT to vimai",
-        "tests/test_config.py: F06 coverage for missing LangSmith key, .env loading, tracing flag enablement, malformed .env errors, and no key persisted on Config",
-        "README.md: setup, .env, troubleshooting, config reference, and e2e docs updated to make LangSmith required",
+        "pyproject.toml and uv.lock: python-dotenv added as a runtime dependency",
+        "src/vimai/config.py: load_config() uses python-dotenv to load .env files and enables LANGSMITH_TRACING/LANGCHAIN_TRACING_V2 only when LANGSMITH_API_KEY is present",
+        "tests/test_config.py: F06 coverage for .env loading, tracing flag enablement with a key, no tracing when key is absent, and no key persisted on Config",
+        "README.md: setup, .env, troubleshooting, config reference, and e2e docs updated to make LangSmith optional but automatic when configured",
         "uv run ruff format . && uv run ruff check . && uv run pytest: 102/102 passed"
       ],
-      "notes": "LangSmith is now required observability, not optional. The API key belongs in the environment or .env; .env remains ignored by git."
+      "notes": "LangSmith support is important observability, but it is subscription-gated. Users without LANGSMITH_API_KEY can still use vimai without traces. The API key belongs in the environment or .env; .env remains ignored by git."
     },
     {
       "id": "F07",
