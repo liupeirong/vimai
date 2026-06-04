@@ -14,6 +14,27 @@ interface session_log {
 ```json
 [
   {
+    "datetime": "2026-06-04 16:06",
+    "current_feature": "F06 (Required LangSmith tracing)",
+    "what_was_done": [
+      "Changed F06 from optional observability to required LangSmith tracing",
+      "Added .env loading from the current working directory and plugin checkout root",
+      "Made LANGSMITH_API_KEY a required config variable with clear missing-variable errors",
+      "Enabled LANGSMITH_TRACING and LANGCHAIN_TRACING_V2 automatically before LLM calls",
+      "Defaulted LANGSMITH_PROJECT to vimai when unset",
+      "Updated README.md with required LangSmith setup, .env examples, troubleshooting, config reference, and e2e requirements",
+      "Added pytest coverage for required key validation, .env loading, tracing flag enablement, malformed .env errors, and avoiding key storage on Config",
+      "Recorded F06 as passing in .ai/feature-list.md"
+    ],
+    "decision": [
+      "Observability is required, so missing LANGSMITH_API_KEY now blocks LLM calls instead of silently running without traces",
+      "Keep the LangSmith key in process environment only; Config does not expose or store the secret",
+      "Set both LANGSMITH_TRACING and legacy LANGCHAIN_TRACING_V2 so LangChain/LangSmith tracing works across supported package behavior"
+    ],
+    "issues": [],
+    "next_step": "Define implementation details for F10 (Package and distribute the plugin)."
+  },
+  {
     "datetime": "2026-06-04 15:40",
     "current_feature": "F08 (Route prompt to named agent via :AI @<name>)",
     "what_was_done": [

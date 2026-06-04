@@ -24,7 +24,7 @@ interface feature_list {
 
 ```json
 {
-  "last_updated": "2026-06-04 15:31",
+  "last_updated": "2026-06-04 16:06",
   "feature": [
     {
       "id": "infra-001",
@@ -173,17 +173,25 @@ interface feature_list {
     },
     {
       "id": "F06",
-      "priority": 3,
+      "priority": 1,
       "area": "observability",
-      "title": "LangSmith tracing (optional)",
-      "user_visible_behavior": "When LANGCHAIN_TRACING_V2 and LANGSMITH_API_KEY are set, calls are traced in LangSmith.",
-      "status": "not_started",
+      "title": "Required LangSmith tracing",
+      "user_visible_behavior": "Every LLM call is traced to LangSmith. Users provide LANGSMITH_API_KEY directly or in .env; vimai enables tracing automatically.",
+      "status": "passing",
       "verification": [
-        "Traces appear in LangSmith when vars are set",
-        "Plugin works normally when vars are absent"
+        "LANGSMITH_API_KEY is required and missing values produce a clear config error",
+        ".env files are loaded from the current working directory or plugin checkout root",
+        "LangSmith tracing flags are enabled automatically before LLM calls",
+        "LANGSMITH_PROJECT defaults to vimai when absent",
+        "No LangSmith API key is stored in source code or the Config dataclass"
       ],
-      "evidence": [],
-      "notes": "LangSmith tracing is automatic via LangChain when env vars are present."
+      "evidence": [
+        "src/vimai/config.py: load_config() loads .env, requires LANGSMITH_API_KEY, enables LANGSMITH_TRACING and LANGCHAIN_TRACING_V2, and defaults LANGSMITH_PROJECT to vimai",
+        "tests/test_config.py: F06 coverage for missing LangSmith key, .env loading, tracing flag enablement, malformed .env errors, and no key persisted on Config",
+        "README.md: setup, .env, troubleshooting, config reference, and e2e docs updated to make LangSmith required",
+        "uv run ruff format . && uv run ruff check . && uv run pytest: 102/102 passed"
+      ],
+      "notes": "LangSmith is now required observability, not optional. The API key belongs in the environment or .env; .env remains ignored by git."
     },
     {
       "id": "F07",
