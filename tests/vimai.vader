@@ -156,3 +156,8 @@ Execute (multi-line prompt submit returns cursor to original window):
   call setline(1, ['line one', 'line two'])
   call VimaiTestSubmitPrompt()
   AssertEqual orig_winid, win_getid(), "cursor should return to original window after prompt submission"
+
+Execute (agent prompts are detected):
+  Assert VimaiTestIsAgentPrompt('@vi explain :global'), "expected @vi prompt to be detected as agent prompt"
+  Assert VimaiTestIsAgentPrompt('  @git status help'), "expected whitespace-prefixed @git prompt to be detected"
+  Assert !VimaiTestIsAgentPrompt('explain @registers'), "non-leading @ should not be an agent prompt"

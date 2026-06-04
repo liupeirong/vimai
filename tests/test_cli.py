@@ -1,4 +1,4 @@
-"""Unit tests for vimai.cli (F01, F03, F04)."""
+"""Unit tests for vimai.cli (F01, F03, F04, F08)."""
 
 import sys
 from pathlib import Path
@@ -397,3 +397,95 @@ class TestCliCommandFlag:
 
         assert exc_info.value.code == 0
         assert "/help" in capsys.readouterr().out.lower()
+
+
+class TestCliAgentRouting:
+    """F08: leading @agent prompts are stateless single-turn agent calls."""
+
+    def test_agent_prompt_calls_invoke_agent(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture,
+    ) -> None:
+        monkeypatch.setattr(sys, "argv", ["vimai", "@vi explain :global"])
+
+        with (
+            patch("vimai.cli.load_config", return_value="config") as mock_config,
+            patch("vimai.cli.invoke_agent", return_value="agent answer") as mock_agent,
+            patch("vimai.cli.invoke_chain") as mock_chain,
+            pytest.raises(SystemExit) as exc_info,
+        ):
+            main()
+
+        assert exc_info.value.code == 0
+        mock_config.assert_called_once()
+        mock_agent.assert_called_once_with("config", "vi", "explain :global")
+        mock_chain.assert_not_called()
+        assert capsys.readouterr().out.strip() == "agent answer"
+
+    def test_agent_prompt_with_session_skips_history(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
+        session = tmp_path / "vimai-session-test.tmp"
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            ["vimai", "--session", str(session), "@git summarize status"],
+        )
+
+        with (
+            patch("vimai.cli.load_config", return_value="config"),
+            patch("vimai.cli.invoke_agent", return_value="ok") as mock_agent,
+            patch("vimai.cli.invoke_chain_with_history") as mock_history,
+            pytest.raises(SystemExit) as exc_info,
+        ):
+            main()
+
+        assert exc_info.value.code == 0
+        mock_agent.assert_called_once_with("config", "git", "summarize status")
+        mock_history.assert_not_called()
+        assert not session.exists()
+
+    def test_agent_prompt_file_reads_prompt_after_agent_name(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
+        prompt_file = tmp_path / "agent-prompt.txt"
+        prompt_file.write_text(
+            "@vi\nexplain registers\nwith examples", encoding="utf-8"
+        )
+        monkeypatch.setattr(sys, "argv", ["vimai", "--prompt-file", str(prompt_file)])
+
+        with (
+            patch("vimai.cli.load_config", return_value="config"),
+            patch("vimai.cli.invoke_agent", return_value="ok") as mock_agent,
+            pytest.raises(SystemExit) as exc_info,
+        ):
+            main()
+
+        assert exc_info.value.code == 0
+        mock_agent.assert_called_once_with(
+            "config", "vi", "explain registers\nwith examples"
+        )
+
+    def test_agent_prompt_without_body_prints_usage(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture,
+    ) -> None:
+        monkeypatch.setattr(sys, "argv", ["vimai", "@vi"])
+
+        with (
+            patch("vimai.cli.load_config") as mock_config,
+            patch("vimai.cli.invoke_agent") as mock_agent,
+            pytest.raises(SystemExit) as exc_info,
+        ):
+            main()
+
+        assert exc_info.value.code == 1
+        mock_config.assert_not_called()
+        mock_agent.assert_not_called()
+        assert "@<agent> <prompt>" in capsys.readouterr().err

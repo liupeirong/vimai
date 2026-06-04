@@ -145,6 +145,16 @@ You are a Git expert. Give concise, safe commands and explain risky operations.
 EOF
 ```
 
+Route a prompt to an agent by starting `:AI` with `@<name>`:
+
+```vim
+:AI @vi Explain :global with an example
+:AI @git How do I undo the last commit but keep the changes?
+```
+
+Agent calls are stateless single-turn requests. They use the selected agent's
+system prompt and do not read from or write to your current conversation history.
+
 ### Conversation history
 
 vimai automatically maintains conversation history for the current Vim session.
