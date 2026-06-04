@@ -29,12 +29,23 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("prompt", nargs="?", default=None)
     parser.add_argument("--session", default=None, help="Path to session JSON file")
     parser.add_argument(
+        "--prompt-file",
+        default=None,
+        help="Path to a UTF-8 file containing the prompt text.",
+    )
+    parser.add_argument(
         "--command",
         default=None,
         help="Slash command name without leading / (e.g. 'clear', 'purge', 'help'). "
         "Used by the Vim plugin to avoid MSYS2/Git Bash path conversion of /word args.",
     )
     return parser.parse_args()
+
+
+def _resolve_prompt(args: argparse.Namespace) -> str | None:
+    if args.prompt_file:
+        return Path(args.prompt_file).read_text(encoding="utf-8")
+    return args.prompt
 
 
 def main() -> None:
@@ -53,11 +64,17 @@ def main() -> None:
         print(cmd_output)
         sys.exit(0)
 
-    if not args.prompt or not args.prompt.strip():
+    try:
+        raw_prompt = _resolve_prompt(args)
+    except Exception as exc:  # noqa: BLE001
+        print(f"vimai error: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    if not raw_prompt or not raw_prompt.strip():
         print("Usage: vimai '<prompt>'", file=sys.stderr)
         sys.exit(1)
 
-    prompt = args.prompt.strip()
+    prompt = raw_prompt.strip()
 
     # Also handle slash commands in the positional arg for direct CLI use on
     # Linux/macOS where MSYS2 path conversion is not a concern.

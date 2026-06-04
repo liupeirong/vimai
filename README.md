@@ -127,6 +127,10 @@ You can also type `:ai` in lowercase — it is aliased to `:AI`:
 :ai Explain the difference between :s and :S in a substitution command
 ```
 
+For longer prompts, press `<leader>ai` to open a scratch prompt buffer, type as many
+lines as you need, then press `<leader>s` from that buffer to submit. The prompt buffer
+is wiped after submission, and the response appears in the same read-only response split.
+
 ### Conversation history
 
 vimai automatically maintains conversation history for the current Vim session.

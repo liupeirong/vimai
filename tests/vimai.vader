@@ -126,3 +126,32 @@ Execute (clear opens scratch buffer if not yet created):
   Assert VimaiTestBufnum() != -1, "scratch buffer should exist after clear"
   let lines = getbufline(VimaiTestBufnum(), 1, '$')
   AssertEqual ['Session cleared.'], lines, "scratch buffer should show cleared message"
+
+Execute (multi-line prompt keymap opens prompt scratch buffer):
+  let orig_winid = win_getid()
+  call VimaiTestOpenPrompt()
+  AssertEqual 2, winnr('$'), "expected prompt buffer to open in a split"
+  AssertEqual '[AI Prompt]', bufname('%'), "expected current buffer to be the AI prompt buffer"
+  AssertEqual 'nofile', &buftype, "prompt buffer should be a scratch buffer"
+  Assert &modifiable, "prompt buffer should be editable"
+  Assert maparg('<leader>s', 'n') =~# 'SubmitPromptBuffer', "missing buffer-local submit mapping"
+  AssertNotEqual orig_winid, win_getid(), "cursor should move into prompt buffer for editing"
+
+Execute (multi-line prompt submit displays response and wipes prompt buffer):
+  call VimaiTestOpenPrompt()
+  let prompt_bufnum = bufnr('%')
+  call setline(1, ['line one', 'line two'])
+  call VimaiTestSubmitPrompt()
+  Assert !bufexists(prompt_bufnum), "prompt buffer should be wiped after submission"
+  AssertEqual "line one\nline two", VimaiTestSubmittedPrompt(), "submitted prompt should preserve newlines"
+  let lines = getbufline(VimaiTestBufnum(), 1, '$')
+  Assert index(lines, '> line one') >= 0, "first prompt line not shown in response buffer"
+  Assert index(lines, '  line two') >= 0, "second prompt line not shown in response buffer"
+  Assert index(lines, 'test response') >= 0, "mock response not shown in response buffer"
+
+Execute (multi-line prompt submit returns cursor to original window):
+  let orig_winid = win_getid()
+  call VimaiTestOpenPrompt()
+  call setline(1, ['line one', 'line two'])
+  call VimaiTestSubmitPrompt()
+  AssertEqual orig_winid, win_getid(), "cursor should return to original window after prompt submission"

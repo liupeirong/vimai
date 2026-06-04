@@ -14,6 +14,30 @@ interface session_log {
 ```json
 [
   {
+    "datetime": "2026-06-04 06:26",
+    "current_feature": "F02 (Multi-line prompt via scratch buffer)",
+    "what_was_done": [
+      "Added :AIPrompt and <leader>ai / <Plug>(vimai-prompt) to open an editable [AI Prompt] scratch buffer",
+      "Added buffer-local normal and insert mode <leader>s mappings in [AI Prompt] to submit the buffer content",
+      "Submission preserves embedded newlines, closes and wipes the prompt buffer, returns to the original window, and displays the response in [AI Response]",
+      "Updated response display to render multi-line prompts as a first '> ...' line plus indented continuation lines",
+      "Added src/vimai/cli.py --prompt-file support so multiline Vim prompts are passed via a UTF-8 temp file instead of an embedded-newline shell argument",
+      "Added tests/test_cli.py prompt-file coverage and tests/vimai.vader F02 prompt-buffer coverage",
+      "Updated README.md usage docs and .ai/feature-list.md F02 evidence",
+      "Verified F02 with a direct Vim smoke test after the interfering vi session was closed"
+    ],
+    "decision": [
+      "Use <leader>ai as the default keymap for opening the multi-line prompt buffer, backed by <Plug>(vimai-prompt) so users can override it",
+      "Keep <leader>s buffer-local to [AI Prompt] only, with both normal and insert mode mappings",
+      "Use --prompt-file for multiline prompts to avoid Windows shell quoting/newline handling issues"
+    ],
+    "issues": [
+      "vader.vim is not installed in this environment, so the full Vader suite could not be executed here; F02 Vader cases were added for environments with vader.vim installed",
+      "Initial direct Vim smoke attempts were blocked by an external vi session; after it was closed, a stdin-driven smoke test using the sourced plugin wrote 'ok'. This Vim build still returns exit code 1 for ex-mode quit, so the smoke result was judged by explicit assertion output."
+    ],
+    "next_step": "Implement next highest-priority unfinished feature: F09 (Unit and integration test suite) or next product feature F07/F08 depending on whether F09 remains an umbrella feature."
+  },
+  {
     "datetime": "2026-06-03 17:11",
     "current_feature": "F05 (Azure AI Foundry openai/v1 API upgrade)",
     "what_was_done": [

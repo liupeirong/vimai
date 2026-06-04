@@ -1,8 +1,10 @@
-" vimai.vim - Vim plugin for inline LLM queries (F01, F03, F04)
+" vimai.vim - Vim plugin for inline LLM queries (F01, F02, F03, F04)
 "
 " Usage:
-"   :AI <prompt>   Send a prompt to the LLM; response opens in a vertical split
-"   :ai <prompt>   Alias (cabbrev) for :AI
+"   :AI <prompt>     Send a prompt to the LLM; response opens in a vertical split
+"   <leader>ai       Open a scratch buffer for a multi-line prompt
+"   <leader>s        Submit from the multi-line prompt buffer
+"   :ai <prompt>     Alias (cabbrev) for :AI
 "
 " Requirements:
 "   python main.py must be on PATH or VIMAI_SCRIPT env var must point to it.
@@ -36,16 +38,33 @@ let s:session_file = s:tmpdir .
 " :AI <prompt>  – run prompt through vimai and display response inline.
 command! -nargs=+ AI call s:RunAI(<q-args>)
 
+" :AIPrompt  – open a scratch buffer for composing a multi-line prompt.
+command! AIPrompt call s:OpenPromptBuffer()
+
 " :AISession  – show the session file path for this Vim process (for debugging).
 command! AISession echo 'Session file: ' . s:session_file
+
+nnoremap <silent> <Plug>(vimai-prompt) :<C-U>AIPrompt<CR>
+if !hasmapto('<Plug>(vimai-prompt)', 'n')
+  nmap <leader>ai <Plug>(vimai-prompt)
+endif
 
 " Buffer number of the AI response scratch buffer; -1 means not yet created.
 let s:ai_bufnum = -1
 
+" Buffer number of the multi-line prompt scratch buffer; -1 means not open.
+let s:prompt_bufnum = -1
+let s:prompt_return_winid = 0
+
 " Core display logic — separated from system() so it can be driven by tests.
 function! s:ShowInScratchBuffer(prompt, lines) abort
   let l:orig_winid = win_getid()
-  let l:entry = ['> ' . a:prompt, ''] + a:lines
+  let l:prompt_lines = split(a:prompt, "\n", 1)
+  let l:display_prompt = ['> ' . l:prompt_lines[0]]
+  for l:line in l:prompt_lines[1:]
+    call add(l:display_prompt, '  ' . l:line)
+  endfor
+  let l:entry = l:display_prompt + [''] + a:lines
 
   if s:ai_bufnum != -1 && bufexists(s:ai_bufnum)
     " Buffer exists — bring it into view if its window was closed.
@@ -75,16 +94,73 @@ function! s:ShowInScratchBuffer(prompt, lines) abort
   call win_gotoid(l:orig_winid)
 endfunction
 
+function! s:OpenPromptBuffer() abort
+  let s:prompt_return_winid = win_getid()
+
+  if s:prompt_bufnum != -1 && bufexists(s:prompt_bufnum)
+    if bufwinnr(s:prompt_bufnum) == -1
+      execute 'vertical sbuffer ' . s:prompt_bufnum
+    else
+      execute bufwinnr(s:prompt_bufnum) . 'wincmd w'
+    endif
+  else
+    let l:save_splitright = &splitright
+    set splitright
+    vnew
+    let &splitright = l:save_splitright
+    setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile
+    silent file [AI\ Prompt]
+    let s:prompt_bufnum = bufnr('%')
+  endif
+
+  setlocal modifiable
+  nnoremap <silent> <buffer> <leader>s :<C-U>call <SID>SubmitPromptBuffer()<CR>
+  inoremap <silent> <buffer> <leader>s <Esc>:<C-U>call <SID>SubmitPromptBuffer()<CR>
+  echo 'Type a prompt, then press <leader>s to submit.'
+endfunction
+
+function! s:SubmitPromptBuffer() abort
+  call s:SubmitPromptBufferWithRunner(function('s:RunAI'))
+endfunction
+
+function! s:SubmitPromptBufferWithRunner(runner) abort
+  let l:prompt = join(getline(1, '$'), "\n")
+  if empty(trim(l:prompt))
+    echoerr 'vimai prompt is empty'
+    return
+  endif
+
+  let l:prompt_bufnum = bufnr('%')
+  let l:return_winid = s:prompt_return_winid
+  close!
+  if bufexists(l:prompt_bufnum)
+    execute 'bwipeout! ' . l:prompt_bufnum
+  endif
+  let s:prompt_bufnum = -1
+
+  if l:return_winid != 0
+    call win_gotoid(l:return_winid)
+  endif
+  call a:runner(l:prompt)
+endfunction
+
 function! s:RunAI(prompt) abort
   " Slash commands (/clear, /purge, /help) are passed via --command <name>
   " rather than as a positional argument. This avoids MSYS2/Git Bash path
   " conversion, which silently rewrites positional args starting with '/'
   " to Windows file paths, causing them to reach the LLM as normal prompts.
   let l:subcmd = matchstr(a:prompt, '^\s*/\zs\w\+\ze\s*$')
+  let l:promptfile = ''
   if l:subcmd !=# ''
     let l:cmd = 'python ' . shellescape(s:main_script) .
           \ ' --command ' . shellescape(l:subcmd) .
           \ ' --session ' . shellescape(s:session_file)
+  elseif a:prompt =~# "\n"
+    let l:promptfile = tempname()
+    call writefile(split(a:prompt, "\n", 1), l:promptfile)
+    let l:cmd = 'python ' . shellescape(s:main_script) .
+          \ ' --session ' . shellescape(s:session_file) .
+          \ ' --prompt-file ' . shellescape(l:promptfile)
   else
     let l:cmd = 'python ' . shellescape(s:main_script) .
           \ ' --session ' . shellescape(s:session_file) .
@@ -99,6 +175,9 @@ function! s:RunAI(prompt) abort
   call system(l:cmd . ' > ' . shellescape(l:tmpfile) . ' 2>&1')
   let l:lines = readfile(l:tmpfile)
   call delete(l:tmpfile)
+  if l:promptfile !=# ''
+    call delete(l:promptfile)
+  endif
 
   " Strip carriage returns from Windows line endings.
   call map(l:lines, 'substitute(v:val, "\\r", "", "g")')
@@ -168,9 +247,32 @@ function! VimaiTestReset() abort
     execute 'bwipeout! ' . s:ai_bufnum
   endif
   let s:ai_bufnum = -1
+  if s:prompt_bufnum != -1 && bufexists(s:prompt_bufnum)
+    execute 'bwipeout! ' . s:prompt_bufnum
+  endif
+  let s:prompt_bufnum = -1
+  let s:prompt_return_winid = 0
+  let s:test_submitted_prompt = ''
 endfunction
 
 " Return the current scratch buffer number — used by vader assertions.
 function! VimaiTestBufnum() abort
   return s:ai_bufnum
+endfunction
+
+function! VimaiTestOpenPrompt() abort
+  call s:OpenPromptBuffer()
+endfunction
+
+function! VimaiTestSubmitPrompt() abort
+  call s:SubmitPromptBufferWithRunner(function('s:TestPromptRunner'))
+endfunction
+
+function! s:TestPromptRunner(prompt) abort
+  let s:test_submitted_prompt = a:prompt
+  call s:ShowInScratchBuffer(a:prompt, ['test response'])
+endfunction
+
+function! VimaiTestSubmittedPrompt() abort
+  return s:test_submitted_prompt
 endfunction
