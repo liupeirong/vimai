@@ -14,6 +14,28 @@ interface session_log {
 ```json
 [
   {
+    "datetime": "2026-06-04 13:19",
+    "current_feature": "F07 (Generic agent loader from system prompt file)",
+    "what_was_done": [
+      "Added generic agent prompt loading from ~/.vimai/agents/<name>.md with user files overriding bundled prompts",
+      "Added a bundled vi.md Vim expert system prompt under src/vimai/builtin_agents/",
+      "Added invoke_agent() to send the loaded agent prompt as a SystemMessage followed by the user prompt as a HumanMessage without touching session history",
+      "Added package-data configuration so bundled Markdown agent prompts are included in built wheels",
+      "Added README documentation for authoring ~/.vimai/agents/<name>.md files",
+      "Updated docs/ARCHITECTURE.md to describe the generic agent loader and built-in prompt package",
+      "Recorded F07 as passing in .ai/feature-list.md"
+    ],
+    "decision": [
+      "Agent names may contain letters, numbers, underscores, and hyphens only; path separators and dots are rejected to prevent path traversal and ambiguous resource names",
+      "User-defined agent prompts are loaded before bundled prompts so ~/.vimai/agents/vi.md overrides the built-in vi.md",
+      "F07 implements loader and chain support only; F08 remains responsible for exposing :AI @<name> routing in Vim/CLI"
+    ],
+    "issues": [
+      "Initial uv build inspection showed vi.md was missing from the wheel; fixed by adding setuptools package-data for vimai.builtin_agents/*.md"
+    ],
+    "next_step": "Implement F08: route :AI @<name> prompts through invoke_agent() without modifying active session history."
+  },
+  {
     "datetime": "2026-06-04 10:23",
     "current_feature": "F02 (post-implementation mapping fix)",
     "what_was_done": [

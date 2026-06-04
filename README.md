@@ -132,6 +132,19 @@ lines as you need, leave Insert mode with `Esc`, then press `<leader>s` from tha
 to submit. The prompt buffer is wiped after submission, and the response appears in the
 same read-only response split.
 
+### Agent prompt files
+
+Agent definitions are plain Markdown system prompts. vimai looks for user-defined
+agents in `~/.vimai/agents/<name>.md`; a user file overrides a bundled agent with
+the same name. The plugin includes a built-in `vi.md` Vim expert prompt.
+
+```sh
+mkdir -p ~/.vimai/agents
+cat > ~/.vimai/agents/git.md <<'EOF'
+You are a Git expert. Give concise, safe commands and explain risky operations.
+EOF
+```
+
 ### Conversation history
 
 vimai automatically maintains conversation history for the current Vim session.

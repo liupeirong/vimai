@@ -1,4 +1,4 @@
-"""Unit tests for vimai.chain (F01, F03)."""
+"""Unit tests for vimai.chain (F01, F03, F07)."""
 
 import sys
 from pathlib import Path
@@ -8,7 +8,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from vimai.chain import invoke_chain, invoke_chain_with_history
+from vimai.chain import invoke_agent, invoke_chain, invoke_chain_with_history
 from vimai.config import Config
 
 
@@ -187,3 +187,50 @@ class TestInvokeChainWithHistory:
         with patch("vimai.chain.build_llm", return_value=mock_llm):
             with pytest.raises(RuntimeError, match="network error"):
                 invoke_chain_with_history(config, session, "hello")
+
+
+class TestInvokeAgent:
+    def test_sends_system_prompt_then_human_prompt(self, config: Config) -> None:
+        from langchain_core.messages import HumanMessage, SystemMessage
+
+        mock_llm = MagicMock()
+        mock_llm.invoke.return_value = MagicMock(content="agent answer")
+
+        with (
+            patch("vimai.chain.build_llm", return_value=mock_llm),
+            patch("vimai.chain.load_agent") as mock_load_agent,
+        ):
+            mock_load_agent.return_value = MagicMock(
+                system_prompt="You are a Vim expert."
+            )
+            result = invoke_agent(config, "vi", "explain :global")
+
+        assert result == "agent answer"
+        args, _ = mock_llm.invoke.call_args
+        messages = args[0]
+        assert len(messages) == 2
+        assert isinstance(messages[0], SystemMessage)
+        assert messages[0].content == "You are a Vim expert."
+        assert isinstance(messages[1], HumanMessage)
+        assert messages[1].content == "explain :global"
+
+    def test_uses_config_to_build_llm(self, config: Config) -> None:
+        mock_llm = MagicMock()
+        mock_llm.invoke.return_value = MagicMock(content="ok")
+
+        with (
+            patch("vimai.chain.build_llm", return_value=mock_llm) as mock_build,
+            patch("vimai.chain.load_agent") as mock_load_agent,
+        ):
+            mock_load_agent.return_value = MagicMock(system_prompt="Prompt")
+            invoke_agent(config, "git", "status help")
+
+        mock_build.assert_called_once_with(config)
+        mock_load_agent.assert_called_once_with("git")
+
+    def test_propagates_agent_loader_error(self, config: Config) -> None:
+        with patch(
+            "vimai.chain.load_agent", side_effect=RuntimeError("No agent found")
+        ):
+            with pytest.raises(RuntimeError, match="No agent found"):
+                invoke_agent(config, "missing", "hello")
