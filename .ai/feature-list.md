@@ -24,7 +24,7 @@ interface feature_list {
 
 ```json
 {
-  "last_updated": "2026-06-04 13:19",
+  "last_updated": "2026-06-04 15:31",
   "feature": [
     {
       "id": "infra-001",
@@ -227,22 +227,6 @@ interface feature_list {
       ],
       "evidence": [],
       "notes": "Single-turn stateless. @<name> pattern is the extension point for future agent ecosystem integration."
-    },
-    {
-      "id": "F09",
-      "priority": 1,
-      "area": "engineering",
-      "title": "Unit and integration test suite",
-      "user_visible_behavior": "Developer can run 'pytest' and verify all logic without Azure credentials.",
-      "status": "not_started",
-      "verification": [
-        "Unit tests cover: config validation, session CRUD, /clear /purge /help, @vi routing, error handling",
-        "pytest-mock used to mock LangChain and Azure credentials",
-        "E2E tests marked @pytest.mark.e2e, skipped unless RUN_E2E=1",
-        "'pytest' passes with no credentials"
-      ],
-      "evidence": [],
-      "notes": "Tests written alongside each feature."
     },
     {
       "id": "F10",

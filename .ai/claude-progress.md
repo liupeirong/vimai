@@ -14,6 +14,18 @@ interface session_log {
 ```json
 [
   {
+    "datetime": "2026-06-04 15:31",
+    "current_feature": "feature-list maintenance",
+    "what_was_done": [
+      "Removed F09 (Unit and integration test suite) from .ai/feature-list.md"
+    ],
+    "decision": [
+      "Testing is now treated as required implementation evidence for each feature, not as a standalone feature"
+    ],
+    "issues": [],
+    "next_step": "Implement F08: route :AI @<name> prompts through invoke_agent() without modifying active session history."
+  },
+  {
     "datetime": "2026-06-04 13:19",
     "current_feature": "F07 (Generic agent loader from system prompt file)",
     "what_was_done": [
@@ -277,6 +289,7 @@ interface session_log {
     "issues": [],
     "next_step": "Start new session. Implement F05 (Azure OpenAI + Entra ID config) first as it is a dependency of all other features, then F01 (inline :AI query)."
   },
+  {
     "current_feature": "infra-001",
     "what_was_done": [
       "Reviewed all harness files (CLAUDE.md, feature-list.md, clean-state-checklist.md, claude-progress.md, docs/ARCHITECTURE.md)",
