@@ -20,6 +20,7 @@ why it is blocked.
 ## Rules
 
 - One active feature at a time.
+- Create a new branch if you are on the main branch and starting to implement a new feature.
 - Do not claim completion without runnable evidence.
 - Do not rewrite the feature list to hide unfinished work.
 - Do not remove or weaken tests just to make the task look complete.

@@ -179,6 +179,49 @@ class TestCliSessionFlag:
         assert call_args[1] == session
 
 
+class TestCliPromptFile:
+    def test_prompt_file_reads_multiline_prompt(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture,
+        tmp_path: Path,
+    ) -> None:
+        prompt_file = tmp_path / "prompt.txt"
+        prompt_file.write_text("line one\nline two\n", encoding="utf-8")
+        monkeypatch.setattr(sys, "argv", ["vimai", "--prompt-file", str(prompt_file)])
+
+        with (
+            patch("vimai.cli.load_config"),
+            patch("vimai.cli.invoke_chain", return_value="answer") as mock_chain,
+            pytest.raises(SystemExit) as exc_info,
+        ):
+            main()
+
+        assert exc_info.value.code == 0
+        mock_chain.assert_called_once()
+        assert mock_chain.call_args[0][1] == "line one\nline two"
+        assert capsys.readouterr().out.strip() == "answer"
+
+    def test_prompt_file_errors_are_user_visible(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture,
+        tmp_path: Path,
+    ) -> None:
+        missing_prompt = tmp_path / "does-not-exist.txt"
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            ["vimai", "--prompt-file", str(missing_prompt)],
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+
+        assert exc_info.value.code == 1
+        assert "vimai error" in capsys.readouterr().err.lower()
+
+
 class TestCliSlashCommands:
     """F04: slash commands are dispatched before any LLM call."""
 
