@@ -9,7 +9,11 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from vimai.agents import ExternalAgentError, invoke_external_agent
+from vimai.agents import (
+    EXTERNAL_AGENT_TIMEOUT_SECONDS,
+    ExternalAgentError,
+    invoke_external_agent,
+)
 
 
 class TestInvokeExternalAgent:
@@ -84,6 +88,45 @@ class TestInvokeExternalAgent:
 
         assert result == "answer"
         assert prompt_contents == ["line one\nline two"]
+        assert prompt_paths
+        assert not prompt_paths[0].exists()
+
+    def test_subprocess_has_120_second_timeout(self, tmp_path: Path) -> None:
+        agents_dir = tmp_path / "external-agents"
+        wrapper = agents_dir / "git" / "run-agent"
+        wrapper.parent.mkdir(parents=True)
+        wrapper.write_text("#!/bin/sh\n", encoding="utf-8")
+
+        with patch("vimai.agents.external.subprocess.run") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="ok", stderr=""
+            )
+            invoke_external_agent(agents_dir, "git", "status")
+
+        assert mock_run.call_args.kwargs["timeout"] == EXTERNAL_AGENT_TIMEOUT_SECONDS
+        assert EXTERNAL_AGENT_TIMEOUT_SECONDS == 120
+
+    def test_timeout_is_user_visible_and_cleans_prompt_file(
+        self, tmp_path: Path
+    ) -> None:
+        agents_dir = tmp_path / "external-agents"
+        wrapper = agents_dir / "git" / "run-agent"
+        wrapper.parent.mkdir(parents=True)
+        wrapper.write_text("#!/bin/sh\n", encoding="utf-8")
+        prompt_paths: list[Path] = []
+
+        def fake_run(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess:
+            prompt_path = Path(args[args.index("--prompt-file") + 1])
+            prompt_paths.append(prompt_path)
+            raise subprocess.TimeoutExpired(cmd=args, timeout=120)
+
+        with (
+            patch("vimai.agents.external.subprocess.run", side_effect=fake_run),
+            pytest.raises(ExternalAgentError) as exc_info,
+        ):
+            invoke_external_agent(agents_dir, "git", "status")
+
+        assert "timed out after 120 seconds" in str(exc_info.value)
         assert prompt_paths
         assert not prompt_paths[0].exists()
 

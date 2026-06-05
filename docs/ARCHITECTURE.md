@@ -50,7 +50,7 @@ tests/
 - **Chain** (`chain.py`): Wraps LangChain `ChatOpenAI`. Accepts a list of session messages + new prompt, returns response string.
 - **CLI** (`cli.py`): Parses `sys.argv`, dispatches to chain or subcommands, prints to stdout (Vim reads this as `:!` output).
 - **Agent loader** (`agents/loader.py`): Loads `~/.vimai/agents/<name>.md` first, then falls back to bundled prompts such as `builtin_agents/vi.md`. Agent calls are stateless single-turn.
-- **External agent runner** (`agents/external.py`): Runs non-interactive `<VIMAI_EXTERNAL_AGENTS_DIR>/<name>/run-agent` wrappers with `--prompt-file <tempfile>` when no prompt-only agent exists. On Windows, `run-agent.bat` and `run-agent.cmd` are also accepted.
+- **External agent runner** (`agents/external.py`): Runs non-interactive `<VIMAI_EXTERNAL_AGENTS_DIR>/<name>/run-agent` wrappers with `--prompt-file <tempfile>` when no prompt-only agent exists. On Windows, `run-agent.bat` and `run-agent.cmd` are also accepted. External calls time out after 120 seconds.
 
 ## Data Flow
 
@@ -79,7 +79,7 @@ User types: :AI /clear
 - Missing required env vars → `ConfigError` with exact var name and setup hint, printed to stderr, exit code 1.
 - Azure auth failure → caught at invocation, printed as human-readable message, exit code 1.
 - LLM API error → caught, message printed, exit code 1. Session entry is NOT written on error.
-- External agent failure → non-zero exit or wrapper launch failure is printed as a human-readable vimai error, exit code 1. Session entry is NOT written.
+- External agent failure → non-zero exit, timeout, or wrapper launch failure is printed as a human-readable vimai error, exit code 1. Session entry is NOT written.
 - Unknown `/command` → print "Unknown command. Run :AI /help for available commands.", exit code 1.
 
 ## Testing Strategy
