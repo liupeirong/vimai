@@ -24,7 +24,7 @@ interface feature_list {
 
 ```json
 {
-  "last_updated": "2026-06-04 16:40",
+  "last_updated": "2026-06-05 07:03",
   "feature": [
     {
       "id": "infra-001",
@@ -243,6 +243,28 @@ interface feature_list {
         "uv run ruff format . && uv run ruff check . && uv run pytest: 98/98 passed"
       ],
       "notes": "Single-turn stateless. @<name> pattern is the extension point for future agent ecosystem integration. Agent responses reuse the existing [AI Response] split display."
+    },
+    {
+      "id": "F09",
+      "priority": 2,
+      "area": "agents",
+      "title": "External agent command runner",
+      "user_visible_behavior": "Users continue to run ':AI @<name> <prompt>'. vimai first checks the existing prompt-only agent locations for <name>.md. If no prompt-only agent exists, vimai looks in the external agents directory configured by VIMAI_EXTERNAL_AGENTS_DIR in .env and launches <external-agents-dir>/<name>/run-agent with the prompt passed through a temp prompt file. The external agent's stdout/stderr appears in the existing [AI Response] scratch buffer.",
+      "status": "not_started",
+      "verification": [
+        "':AI @<name> <prompt>' remains the single user-facing syntax for prompt-only and external agents",
+        "Existing prompt-only agent resolution has priority: ~/.vimai/agents/<name>.md first, then bundled agents such as vi.md",
+        "If no prompt-only agent exists, vimai reads VIMAI_EXTERNAL_AGENTS_DIR from the normal .env/config loading path",
+        "External agents are discovered as <VIMAI_EXTERNAL_AGENTS_DIR>/<name>/run-agent wrappers",
+        "The run-agent wrapper receives the user prompt via '--prompt-file <tempfile>'",
+        "External agent calls pass the prompt via a UTF-8 temp file instead of shell-embedding multiline content",
+        "stdout and stderr from the external process are captured and displayed in the [AI Response] scratch buffer",
+        "Non-zero external process exits produce a clear user-visible error",
+        "External agent calls do not read from or write to vimai session history",
+        "Unit tests cover prompt-agent precedence, .env config loading, wrapper discovery, prompt-file handling, output capture, non-zero exits, and stateless routing"
+      ],
+      "evidence": [],
+      "notes": "External agents are non-interactive request/response CLIs for v1. The per-agent run-agent wrapper owns venv activation or direct venv Python invocation, so vimai does not guess Python paths, entrypoints, or arguments. Interactive or streaming agents may require Vim jobs/channels later; this feature should first support a simple process contract that writes the final answer to stdout."
     },
     {
       "id": "F10",
