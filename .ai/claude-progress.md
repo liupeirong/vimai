@@ -14,6 +14,20 @@ interface session_log {
 ```json
 [
   {
+    "datetime": "2026-06-05 13:11",
+    "current_feature": "F09 (Windows external agent wrapper fix)",
+    "what_was_done": [
+      "Updated external agent discovery to accept run-agent.bat and run-agent.cmd on Windows",
+      "Kept extensionless run-agent as the preferred wrapper when both extensionless and Windows-specific wrappers exist",
+      "Updated tests, README.md, docs/ARCHITECTURE.md, and F09 feature evidence for Windows wrapper support"
+    ],
+    "decision": [
+      "Windows users should not need to create an extensionless run-agent file; run-agent.bat is a supported wrapper name"
+    ],
+    "issues": [],
+    "next_step": "Implement next highest-priority unfinished feature: F10 (Package and distribute the plugin)."
+  },
+  {
     "datetime": "2026-06-05 07:16",
     "current_feature": "F09 (External agent command runner)",
     "what_was_done": [

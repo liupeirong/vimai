@@ -27,6 +27,7 @@ src/vimai/
 <VIMAI_EXTERNAL_AGENTS_DIR>/
   <name>/
     run-agent       # External non-interactive agent wrapper; accepts --prompt-file
+    run-agent.bat   # Windows alternative
 
 plugin/
   vimai.vim         # Vim plugin: :AI command, cabbrev, scratch buffer, autocommand (F01,F02,F04,F08)
@@ -49,7 +50,7 @@ tests/
 - **Chain** (`chain.py`): Wraps LangChain `ChatOpenAI`. Accepts a list of session messages + new prompt, returns response string.
 - **CLI** (`cli.py`): Parses `sys.argv`, dispatches to chain or subcommands, prints to stdout (Vim reads this as `:!` output).
 - **Agent loader** (`agents/loader.py`): Loads `~/.vimai/agents/<name>.md` first, then falls back to bundled prompts such as `builtin_agents/vi.md`. Agent calls are stateless single-turn.
-- **External agent runner** (`agents/external.py`): Runs non-interactive `<VIMAI_EXTERNAL_AGENTS_DIR>/<name>/run-agent` wrappers with `--prompt-file <tempfile>` when no prompt-only agent exists.
+- **External agent runner** (`agents/external.py`): Runs non-interactive `<VIMAI_EXTERNAL_AGENTS_DIR>/<name>/run-agent` wrappers with `--prompt-file <tempfile>` when no prompt-only agent exists. On Windows, `run-agent.bat` and `run-agent.cmd` are also accepted.
 
 ## Data Flow
 

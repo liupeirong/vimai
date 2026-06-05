@@ -1,6 +1,7 @@
 """Run non-interactive external agent command wrappers."""
 
 from pathlib import Path
+import os
 import subprocess
 import tempfile
 
@@ -19,15 +20,19 @@ def invoke_external_agent(
     The wrapper contract is:
         <external_agents_dir>/<agent_name>/run-agent --prompt-file <tempfile>
 
+    On Windows, run-agent.bat and run-agent.cmd are also accepted.
+
     The prompt is always written to a UTF-8 temporary file so multiline content
     is not embedded in shell arguments.
     """
     normalized_name = normalize_agent_name(agent_name)
-    wrapper = Path(external_agents_dir).expanduser() / normalized_name / "run-agent"
-    if not wrapper.is_file():
+    agent_dir = Path(external_agents_dir).expanduser() / normalized_name
+    wrapper = _resolve_wrapper(agent_dir)
+    if wrapper is None:
+        expected = ", ".join(str(path) for path in _wrapper_candidates(agent_dir))
         raise ExternalAgentError(
             f"No prompt-only agent found for @{normalized_name}, and no external "
-            f"run-agent wrapper found at {wrapper}."
+            f"run-agent wrapper found. Checked: {expected}."
         )
 
     prompt_path: Path | None = None
@@ -70,3 +75,22 @@ def invoke_external_agent(
 def _combine_output(stdout: str, stderr: str) -> str:
     parts = [stream.rstrip("\n") for stream in (stdout, stderr) if stream]
     return "\n".join(parts)
+
+
+def _resolve_wrapper(agent_dir: Path) -> Path | None:
+    for candidate in _wrapper_candidates(agent_dir):
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def _wrapper_candidates(agent_dir: Path) -> tuple[Path, ...]:
+    candidates = [agent_dir / "run-agent"]
+    if os.name == "nt":
+        candidates.extend(
+            [
+                agent_dir / "run-agent.bat",
+                agent_dir / "run-agent.cmd",
+            ]
+        )
+    return tuple(candidates)

@@ -176,12 +176,14 @@ one subdirectory per external agent:
 VIMAI_EXTERNAL_AGENTS_DIR=/path/to/external-agents
 ```
 
-Each external agent must provide a `run-agent` wrapper:
+Each external agent must provide a `run-agent` wrapper. On Windows,
+`run-agent.bat` and `run-agent.cmd` are also supported:
 
 ```text
 /path/to/external-agents/
   git/
     run-agent
+    run-agent.bat  # Windows alternative
 ```
 
 vimai invokes the wrapper as:
