@@ -95,7 +95,7 @@ def _resolve_wrapper(agent_dir: Path) -> Path | None:
 
 def _wrapper_candidates(agent_dir: Path) -> tuple[Path, ...]:
     candidates = [agent_dir / "run-agent"]
-    if os.name == "nt":
+    if _is_windows():
         candidates.extend(
             [
                 agent_dir / "run-agent.bat",
@@ -103,3 +103,7 @@ def _wrapper_candidates(agent_dir: Path) -> tuple[Path, ...]:
             ]
         )
     return tuple(candidates)
+
+
+def _is_windows() -> bool:
+    return os.name == "nt"
