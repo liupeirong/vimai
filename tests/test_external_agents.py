@@ -38,7 +38,7 @@ class TestInvokeExternalAgent:
         wrapper.write_text("@echo off\n", encoding="utf-8")
 
         with (
-            patch("vimai.agents.external.os.name", "nt"),
+            patch("vimai.agents.external._is_windows", return_value=True),
             patch("vimai.agents.external.subprocess.run") as mock_run,
         ):
             mock_run.return_value = subprocess.CompletedProcess(
@@ -57,7 +57,7 @@ class TestInvokeExternalAgent:
         (agent_dir / "run-agent.bat").write_text("@echo off\n", encoding="utf-8")
 
         with (
-            patch("vimai.agents.external.os.name", "nt"),
+            patch("vimai.agents.external._is_windows", return_value=True),
             patch("vimai.agents.external.subprocess.run") as mock_run,
         ):
             mock_run.return_value = subprocess.CompletedProcess(
