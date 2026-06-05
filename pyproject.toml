@@ -12,6 +12,12 @@ dependencies = [
     "python-dotenv>=1.2.2",
 ]
 
+[project.scripts]
+vimai = "vimai.cli:main"
+
+[tool.uv]
+package = true
+
 [dependency-groups]
 dev = [
     "commitizen>=4.16.3",

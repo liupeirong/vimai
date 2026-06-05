@@ -14,6 +14,36 @@ interface session_log {
 ```json
 [
   {
+    "datetime": "2026-06-05 15:17",
+    "current_feature": "F10 (Package and distribute the plugin)",
+    "what_was_done": [
+      "Added s:ResolvePythonCommand() to plugin/vimai.vim: checks g:vimai_python, then VIMAI_PYTHON env, then checkout .venv Python, then bare 'python'",
+      "Added s:ResolveMainScript() with VIMAI_SCRIPT override support",
+      "Replaced all hardcoded 'python' in system() calls with shellescape(s:python_cmd)",
+      "Created doc/vimai.txt Vim help documentation covering installation, commands, and configuration",
+      "Created MANIFEST.in with plugin/, doc/, main.py, and docs/ includes",
+      "Added [project.scripts] vimai = 'vimai.cli:main' and tool.uv.package = true to pyproject.toml",
+      "Rewrote README.md Step 1 with vim-plug, Vundle, lazy.nvim, and release archive install paths",
+      "Rewrote README.md Step 5 to document auto-venv resolution instead of manual activation",
+      "Added VIMAI_PYTHON and VIMAI_SCRIPT to README.md configuration reference and troubleshooting",
+      "Added Distribution section to docs/ARCHITECTURE.md",
+      "Created tests/test_distribution.py with 4 packaging verification tests",
+      "Added 2 vader tests for main script and python command resolution",
+      "Verified uv build produces sdist and wheel with all expected files",
+      "Recorded F10 as passing in .ai/feature-list.md"
+    ],
+    "decision": [
+      "Plugin auto-discovers checkout-local .venv so users no longer need to activate it manually",
+      "g:vimai_python (vimrc) takes highest priority, then VIMAI_PYTHON (env), then .venv, then bare python",
+      "Removed explicit [build-system] block to avoid uv hardlink failures on this OneDrive-synced machine; setuptools is still the implicit default",
+      "MANIFEST.in is used for sdist contents; wheel includes Python package via setuptools auto-discovery"
+    ],
+    "issues": [
+      "uv sync with tool.uv.package=true fails on this machine without UV_LINK_MODE=copy due to OneDrive hardlink os error 396; this is an environment-specific issue"
+    ],
+    "next_step": "All features are complete. Consider tagging v0.1.0 release."
+  },
+  {
     "datetime": "2026-06-05 13:49",
     "current_feature": "F09 (External agent timeout)",
     "what_was_done": [
