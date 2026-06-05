@@ -27,6 +27,42 @@ class TestInvokeExternalAgent:
 
         assert mock_run.call_args[0][0][0] == str(wrapper)
 
+    def test_discovers_windows_bat_wrapper(self, tmp_path: Path) -> None:
+        agents_dir = tmp_path / "external-agents"
+        wrapper = agents_dir / "git" / "run-agent.bat"
+        wrapper.parent.mkdir(parents=True)
+        wrapper.write_text("@echo off\n", encoding="utf-8")
+
+        with (
+            patch("vimai.agents.external.os.name", "nt"),
+            patch("vimai.agents.external.subprocess.run") as mock_run,
+        ):
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="ok", stderr=""
+            )
+            invoke_external_agent(agents_dir, "git", "status")
+
+        assert mock_run.call_args[0][0][0] == str(wrapper)
+
+    def test_prefers_extensionless_wrapper_on_windows(self, tmp_path: Path) -> None:
+        agents_dir = tmp_path / "external-agents"
+        agent_dir = agents_dir / "git"
+        agent_dir.mkdir(parents=True)
+        preferred = agent_dir / "run-agent"
+        preferred.write_text("#!/bin/sh\n", encoding="utf-8")
+        (agent_dir / "run-agent.bat").write_text("@echo off\n", encoding="utf-8")
+
+        with (
+            patch("vimai.agents.external.os.name", "nt"),
+            patch("vimai.agents.external.subprocess.run") as mock_run,
+        ):
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="ok", stderr=""
+            )
+            invoke_external_agent(agents_dir, "git", "status")
+
+        assert mock_run.call_args[0][0][0] == str(preferred)
+
     def test_passes_prompt_via_utf8_prompt_file(self, tmp_path: Path) -> None:
         agents_dir = tmp_path / "external-agents"
         wrapper = agents_dir / "git" / "run-agent"
