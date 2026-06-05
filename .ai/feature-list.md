@@ -24,7 +24,7 @@ interface feature_list {
 
 ```json
 {
-  "last_updated": "2026-06-05 07:03",
+  "last_updated": "2026-06-05 15:55",
   "feature": [
     {
       "id": "infra-001",
@@ -283,10 +283,33 @@ interface feature_list {
       "area": "distribution",
       "title": "Package and distribute the plugin",
       "user_visible_behavior": "Users can install vimai via standard Vim plugin managers (vim-plug, Vundle, lazy.nvim, etc.) or download a release archive.",
-      "status": "not_started",
-      "verification": [],
-      "evidence": [],
-      "notes": "Details TBD. Deferred to end of development."
+      "status": "passing",
+      "verification": [
+        "vim-plug, Vundle, and lazy.nvim install instructions are documented in README.md and doc/vimai.txt",
+        "Release archive install path is documented in README.md",
+        "plugin/vimai.vim automatically uses checkout-local .venv Python without manual venv activation",
+        "g:vimai_python, VIMAI_PYTHON, and VIMAI_SCRIPT overrides are supported for custom installs",
+        "doc/vimai.txt provides Vim :help documentation for all commands and configuration",
+        "pyproject.toml exposes a vimai console script entry point",
+        "MANIFEST.in includes plugin/, doc/, docs/, README.md, and main.py in source distributions",
+        "uv build produces both sdist and wheel with all expected files",
+        "pytest distribution tests verify packaging structure, launcher resolution, and docs coverage"
+      ],
+      "evidence": [
+        "plugin/vimai.vim: s:ResolvePythonCommand() checks g:vimai_python, then VIMAI_PYTHON, then checkout .venv/{Scripts/python.exe,bin/python}, then falls back to bare 'python'",
+        "plugin/vimai.vim: s:ResolveMainScript() checks VIMAI_SCRIPT before defaulting to <plugin_dir>/main.py",
+        "plugin/vimai.vim: all system() calls use shellescape(s:python_cmd) instead of hardcoded 'python'",
+        "doc/vimai.txt: Vim help documentation covering installation, commands, slash commands, and configuration",
+        "pyproject.toml: [project.scripts] vimai = 'vimai.cli:main' with tool.uv.package = true",
+        "MANIFEST.in: includes main.py, plugin/*.vim, doc/*.txt, docs/*.md",
+        "README.md: plugin manager install instructions for vim-plug, Vundle, lazy.nvim, and release archives; Step 5 rewritten for auto-venv resolution",
+        "docs/ARCHITECTURE.md: Distribution section documenting plugin layout and install contract",
+        "tests/test_distribution.py: 4 tests covering launcher resolution, MANIFEST.in, plugin manager docs, and console script entry point",
+        "tests/vimai.vader: 2 new vader tests for main script and python command resolution",
+        "uv build: sdist vimai-0.1.0.tar.gz and wheel vimai-0.1.0-py3-none-any.whl built successfully with plugin/, doc/, builtin_agents/vi.md",
+        "uv run ruff format . && uv run ruff check . && uv run pytest: 120/120 passed"
+      ],
+      "notes": "On this Windows machine, uv sync requires UV_LINK_MODE=copy due to a OneDrive hardlink limitation (os error 396). This is an environment-specific issue, not a vimai packaging problem."
     }
   ]
 }

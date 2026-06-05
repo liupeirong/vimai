@@ -8,7 +8,8 @@
 "   :ai <prompt>     Alias (cabbrev) for :AI
 "
 " Requirements:
-"   python main.py must be on PATH or VIMAI_SCRIPT env var must point to it.
+"   Run `uv sync` in the plugin checkout. vimai uses .venv automatically when
+"   present; set g:vimai_python or VIMAI_PYTHON to override the Python path.
 "   AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_DEPLOYMENT must be set.
 
 if exists('g:loaded_vimai')
@@ -22,7 +23,36 @@ cabbrev ai AI
 " Resolve the path to main.py relative to this plugin file so the plugin
 " works regardless of the user's working directory.
 let s:plugin_dir = expand('<sfile>:p:h:h')
-let s:main_script = s:plugin_dir . '/main.py'
+
+function! s:ResolveMainScript() abort
+  if exists('$VIMAI_SCRIPT') && $VIMAI_SCRIPT !=# ''
+    return expand($VIMAI_SCRIPT)
+  endif
+  return s:plugin_dir . '/main.py'
+endfunction
+
+function! s:ResolvePythonCommand() abort
+  if exists('g:vimai_python') && !empty(g:vimai_python)
+    return g:vimai_python
+  endif
+  if exists('$VIMAI_PYTHON') && $VIMAI_PYTHON !=# ''
+    return expand($VIMAI_PYTHON)
+  endif
+
+  if has('win32') || has('win64') || has('win32unix')
+    let l:venv_python = s:plugin_dir . '/.venv/Scripts/python.exe'
+  else
+    let l:venv_python = s:plugin_dir . '/.venv/bin/python'
+  endif
+  if filereadable(l:venv_python)
+    return l:venv_python
+  endif
+
+  return 'python'
+endfunction
+
+let s:main_script = s:ResolveMainScript()
+let s:python_cmd = s:ResolvePythonCommand()
 
 " Generate a session file path for this Vim process directly in the system
 " temp directory — $TEMP on Windows, $TMPDIR (or /tmp) on Linux/macOS.
@@ -153,19 +183,19 @@ function! s:RunAI(prompt) abort
   let l:is_agent_prompt = s:IsAgentPrompt(a:prompt)
   let l:promptfile = ''
   if l:subcmd !=# ''
-    let l:cmd = 'python ' . shellescape(s:main_script) .
+    let l:cmd = shellescape(s:python_cmd) . ' ' . shellescape(s:main_script) .
           \ ' --command ' . shellescape(l:subcmd) .
           \ ' --session ' . shellescape(s:session_file)
   elseif a:prompt =~# "\n"
     let l:promptfile = tempname()
     call writefile(split(a:prompt, "\n", 1), l:promptfile)
-    let l:cmd = 'python ' . shellescape(s:main_script)
+    let l:cmd = shellescape(s:python_cmd) . ' ' . shellescape(s:main_script)
     if !l:is_agent_prompt
       let l:cmd .= ' --session ' . shellescape(s:session_file)
     endif
     let l:cmd .= ' --prompt-file ' . shellescape(l:promptfile)
   else
-    let l:cmd = 'python ' . shellescape(s:main_script)
+    let l:cmd = shellescape(s:python_cmd) . ' ' . shellescape(s:main_script)
     if !l:is_agent_prompt
       let l:cmd .= ' --session ' . shellescape(s:session_file)
     endif
@@ -288,4 +318,12 @@ endfunction
 
 function! VimaiTestIsAgentPrompt(prompt) abort
   return s:IsAgentPrompt(a:prompt)
+endfunction
+
+function! VimaiTestPythonCommand() abort
+  return s:python_cmd
+endfunction
+
+function! VimaiTestMainScript() abort
+  return s:main_script
 endfunction

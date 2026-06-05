@@ -161,3 +161,9 @@ Execute (agent prompts are detected):
   Assert VimaiTestIsAgentPrompt('@vi explain :global'), "expected @vi prompt to be detected as agent prompt"
   Assert VimaiTestIsAgentPrompt('  @git status help'), "expected whitespace-prefixed @git prompt to be detected"
   Assert !VimaiTestIsAgentPrompt('explain @registers'), "non-leading @ should not be an agent prompt"
+
+Execute (main script resolves relative to plugin checkout):
+  Assert VimaiTestMainScript() =~# 'main.py$', "main.py path should resolve from the plugin checkout"
+
+Execute (python command resolves to a non-empty executable path or command):
+  Assert VimaiTestPythonCommand() !=# '', "python command should not be empty"

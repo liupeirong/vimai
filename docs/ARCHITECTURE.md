@@ -32,6 +32,9 @@ src/vimai/
 plugin/
   vimai.vim         # Vim plugin: :AI command, cabbrev, scratch buffer, autocommand (F01,F02,F04,F08)
 
+doc/
+  vimai.txt         # Vim help documentation for packaged installs (F10)
+
 main.py             # Thin wrapper: calls cli.main()
 tests/
   test_config.py
@@ -51,6 +54,7 @@ tests/
 - **CLI** (`cli.py`): Parses `sys.argv`, dispatches to chain or subcommands, prints to stdout (Vim reads this as `:!` output).
 - **Agent loader** (`agents/loader.py`): Loads `~/.vimai/agents/<name>.md` first, then falls back to bundled prompts such as `builtin_agents/vi.md`. Agent calls are stateless single-turn.
 - **External agent runner** (`agents/external.py`): Runs non-interactive `<VIMAI_EXTERNAL_AGENTS_DIR>/<name>/run-agent` wrappers with `--prompt-file <tempfile>` when no prompt-only agent exists. On Windows, `run-agent.bat` and `run-agent.cmd` are also accepted. External calls time out after 120 seconds.
+- **Vim launcher** (`plugin/vimai.vim`): Resolves `main.py` relative to the installed plugin checkout, prefers the checkout-local `.venv` Python created by `uv sync`, and allows `g:vimai_python`, `VIMAI_PYTHON`, or `VIMAI_SCRIPT` overrides for custom installs.
 
 ## Data Flow
 
@@ -91,6 +95,14 @@ User types: :AI /clear
 ## Observability
 
 - Use OpenTelemetry for logs, metrics, and traces
+
+## Distribution
+
+- The repository is laid out as a standard Vim plugin: `plugin/vimai.vim` is loaded from `runtimepath`, and `doc/vimai.txt` is available to `:helptags`.
+- Standard Vim plugin managers can install the GitHub repo directly. Post-install hooks should run `uv sync` in the checkout so `.venv` exists beside `main.py`.
+- Manual clone and GitHub release archive installs use the same layout; users only need to add the extracted directory to `runtimepath` when no plugin manager manages it.
+- `MANIFEST.in` includes `plugin/`, `doc/`, `docs/`, `README.md`, and `main.py` in source distributions.
+- `pyproject.toml` exposes a `vimai` console script for direct CLI use and package smoke testing.
 
 ## Security
 
