@@ -23,6 +23,7 @@ class Config:
     endpoint: str
     deployment: str
     api_version: str = field(default=_DEFAULT_API_VERSION)
+    external_agents_dir: Path | None = None
 
 
 def _load_dotenv_files(paths: tuple[Path, ...] | None = None) -> None:
@@ -49,6 +50,23 @@ def _configure_langsmith_tracing() -> None:
     os.environ.setdefault("LANGSMITH_PROJECT", _DEFAULT_LANGSMITH_PROJECT)
 
 
+def _external_agents_dir_from_env() -> Path | None:
+    raw_dir = os.environ.get("VIMAI_EXTERNAL_AGENTS_DIR", "").strip()
+    return Path(raw_dir).expanduser() if raw_dir else None
+
+
+def load_external_agents_dir() -> Path:
+    """Load and validate the external agents directory from environment/.env."""
+    _load_dotenv_files()
+    external_agents_dir = _external_agents_dir_from_env()
+    if external_agents_dir is None:
+        raise ConfigError(
+            "Missing VIMAI_EXTERNAL_AGENTS_DIR. Set it to the directory "
+            "containing external agent subdirectories."
+        )
+    return external_agents_dir
+
+
 def load_config() -> Config:
     """Load and validate configuration from environment variables.
 
@@ -60,6 +78,7 @@ def load_config() -> Config:
         AZURE_OPENAI_API_VERSION - API version (default: 2024-05-01-preview)
         LANGSMITH_API_KEY        - LangSmith API key for tracing
         LANGSMITH_PROJECT        - LangSmith project name (default: vimai)
+        VIMAI_EXTERNAL_AGENTS_DIR - Parent directory for external agent wrappers
 
     Raises:
         ConfigError: If any required variable is missing.
@@ -89,4 +108,9 @@ def load_config() -> Config:
 
     _configure_langsmith_tracing()
 
-    return Config(endpoint=endpoint, deployment=deployment, api_version=api_version)
+    return Config(
+        endpoint=endpoint,
+        deployment=deployment,
+        api_version=api_version,
+        external_agents_dir=_external_agents_dir_from_env(),
+    )

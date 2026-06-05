@@ -166,6 +166,37 @@ Route a prompt to an agent by starting `:AI` with `@<name>`:
 Agent calls are stateless single-turn requests. They use the selected agent's
 system prompt and do not read from or write to your current conversation history.
 
+### External agent runners
+
+If no prompt file exists for `@<name>`, vimai can run an external non-interactive
+agent wrapper instead. Set `VIMAI_EXTERNAL_AGENTS_DIR` to a directory containing
+one subdirectory per external agent:
+
+```dotenv
+VIMAI_EXTERNAL_AGENTS_DIR=/path/to/external-agents
+```
+
+Each external agent must provide a `run-agent` wrapper:
+
+```text
+/path/to/external-agents/
+  git/
+    run-agent
+```
+
+vimai invokes the wrapper as:
+
+```sh
+/path/to/external-agents/git/run-agent --prompt-file <tempfile>
+```
+
+The prompt is written to a UTF-8 temporary file, so multiline prompts are safe.
+The wrapper should write its final answer to stdout; stdout and stderr are shown
+in the existing `[AI Response]` scratch buffer. Non-zero exits are displayed as a
+clear vimai error. Prompt-only agents still take priority, so
+`~/.vimai/agents/git.md` or a bundled `git.md` would be used before the external
+`git/run-agent` wrapper.
+
 ### Conversation history
 
 vimai automatically maintains conversation history for the current Vim session.
@@ -263,6 +294,7 @@ Get-Content .env | ForEach-Object {
 | `AZURE_OPENAI_DEPLOYMENT`   | Yes      | —                    | Model deployment name                |
 | `LANGSMITH_API_KEY`         | No       | —                    | Enables LangSmith tracing when set   |
 | `LANGSMITH_PROJECT`         | No       | `vimai`              | LangSmith project that receives traces |
+| `VIMAI_EXTERNAL_AGENTS_DIR` | No       | —                    | Parent directory containing external `<name>/run-agent` wrappers |
 
 ---
 

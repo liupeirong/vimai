@@ -1,4 +1,4 @@
-"""Unit tests for vimai.cli (F01, F03, F04, F08)."""
+"""Unit tests for vimai.cli (F01, F03, F04, F08, F09)."""
 
 import sys
 from pathlib import Path
@@ -400,7 +400,7 @@ class TestCliCommandFlag:
 
 
 class TestCliAgentRouting:
-    """F08: leading @agent prompts are stateless single-turn agent calls."""
+    """F08/F09: leading @agent prompts are stateless agent calls."""
 
     def test_agent_prompt_calls_invoke_agent(
         self,
@@ -411,7 +411,11 @@ class TestCliAgentRouting:
 
         with (
             patch("vimai.cli.load_config", return_value="config") as mock_config,
-            patch("vimai.cli.invoke_agent", return_value="agent answer") as mock_agent,
+            patch("vimai.cli.load_agent", return_value="agent") as mock_load_agent,
+            patch(
+                "vimai.cli.invoke_loaded_agent", return_value="agent answer"
+            ) as mock_agent,
+            patch("vimai.cli.invoke_external_agent") as mock_external,
             patch("vimai.cli.invoke_chain") as mock_chain,
             pytest.raises(SystemExit) as exc_info,
         ):
@@ -419,7 +423,9 @@ class TestCliAgentRouting:
 
         assert exc_info.value.code == 0
         mock_config.assert_called_once()
-        mock_agent.assert_called_once_with("config", "vi", "explain :global")
+        mock_load_agent.assert_called_once_with("vi")
+        mock_agent.assert_called_once_with("config", "agent", "explain :global")
+        mock_external.assert_not_called()
         mock_chain.assert_not_called()
         assert capsys.readouterr().out.strip() == "agent answer"
 
@@ -437,14 +443,15 @@ class TestCliAgentRouting:
 
         with (
             patch("vimai.cli.load_config", return_value="config"),
-            patch("vimai.cli.invoke_agent", return_value="ok") as mock_agent,
+            patch("vimai.cli.load_agent", return_value="agent"),
+            patch("vimai.cli.invoke_loaded_agent", return_value="ok") as mock_agent,
             patch("vimai.cli.invoke_chain_with_history") as mock_history,
             pytest.raises(SystemExit) as exc_info,
         ):
             main()
 
         assert exc_info.value.code == 0
-        mock_agent.assert_called_once_with("config", "git", "summarize status")
+        mock_agent.assert_called_once_with("config", "agent", "summarize status")
         mock_history.assert_not_called()
         assert not session.exists()
 
@@ -461,14 +468,15 @@ class TestCliAgentRouting:
 
         with (
             patch("vimai.cli.load_config", return_value="config"),
-            patch("vimai.cli.invoke_agent", return_value="ok") as mock_agent,
+            patch("vimai.cli.load_agent", return_value="agent"),
+            patch("vimai.cli.invoke_loaded_agent", return_value="ok") as mock_agent,
             pytest.raises(SystemExit) as exc_info,
         ):
             main()
 
         assert exc_info.value.code == 0
         mock_agent.assert_called_once_with(
-            "config", "vi", "explain registers\nwith examples"
+            "config", "agent", "explain registers\nwith examples"
         )
 
     def test_agent_prompt_without_body_prints_usage(
@@ -480,7 +488,7 @@ class TestCliAgentRouting:
 
         with (
             patch("vimai.cli.load_config") as mock_config,
-            patch("vimai.cli.invoke_agent") as mock_agent,
+            patch("vimai.cli.invoke_loaded_agent") as mock_agent,
             pytest.raises(SystemExit) as exc_info,
         ):
             main()
@@ -489,3 +497,71 @@ class TestCliAgentRouting:
         mock_config.assert_not_called()
         mock_agent.assert_not_called()
         assert "@<agent> <prompt>" in capsys.readouterr().err
+
+    def test_missing_prompt_agent_falls_back_to_external_agent(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture,
+        tmp_path: Path,
+    ) -> None:
+        from vimai.agents import AgentNotFoundError
+
+        external_agents_dir = tmp_path / "external-agents"
+        monkeypatch.setattr(sys, "argv", ["vimai", "@git summarize status"])
+
+        with (
+            patch("vimai.cli.load_agent", side_effect=AgentNotFoundError("missing")),
+            patch("vimai.cli.load_config") as mock_config,
+            patch(
+                "vimai.cli.load_external_agents_dir",
+                return_value=external_agents_dir,
+            ) as mock_external_dir,
+            patch(
+                "vimai.cli.invoke_external_agent", return_value="external answer"
+            ) as mock_external,
+            pytest.raises(SystemExit) as exc_info,
+        ):
+            main()
+
+        assert exc_info.value.code == 0
+        mock_config.assert_not_called()
+        mock_external_dir.assert_called_once()
+        mock_external.assert_called_once_with(
+            external_agents_dir, "git", "summarize status"
+        )
+        assert capsys.readouterr().out.strip() == "external answer"
+
+    def test_external_agent_with_session_skips_history(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
+        from vimai.agents import AgentNotFoundError
+
+        session = tmp_path / "vimai-session-test.tmp"
+        external_agents_dir = tmp_path / "external-agents"
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            ["vimai", "--session", str(session), "@git summarize status"],
+        )
+
+        with (
+            patch("vimai.cli.load_agent", side_effect=AgentNotFoundError("missing")),
+            patch(
+                "vimai.cli.load_external_agents_dir", return_value=external_agents_dir
+            ),
+            patch(
+                "vimai.cli.invoke_external_agent", return_value="ok"
+            ) as mock_external,
+            patch("vimai.cli.invoke_chain_with_history") as mock_history,
+            pytest.raises(SystemExit) as exc_info,
+        ):
+            main()
+
+        assert exc_info.value.code == 0
+        mock_external.assert_called_once_with(
+            external_agents_dir, "git", "summarize status"
+        )
+        mock_history.assert_not_called()
+        assert not session.exists()

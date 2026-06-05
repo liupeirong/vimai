@@ -4,7 +4,7 @@ from pathlib import Path
 
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 
-from .agents import load_agent
+from .agents import Agent, load_agent
 from .config import Config
 from .llm import build_llm
 from .session import SessionEntry, load_session, save_session
@@ -89,6 +89,11 @@ def invoke_agent(config: Config, agent_name: str, prompt: str) -> str:
         Any exception raised by the underlying LLM client is propagated.
     """
     agent = load_agent(agent_name)
+    return invoke_loaded_agent(config, agent, prompt)
+
+
+def invoke_loaded_agent(config: Config, agent: Agent, prompt: str) -> str:
+    """Send a stateless single-turn prompt using an already loaded agent."""
     llm = build_llm(config)
     response = llm.invoke(
         [

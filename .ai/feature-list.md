@@ -250,7 +250,7 @@ interface feature_list {
       "area": "agents",
       "title": "External agent command runner",
       "user_visible_behavior": "Users continue to run ':AI @<name> <prompt>'. vimai first checks the existing prompt-only agent locations for <name>.md. If no prompt-only agent exists, vimai looks in the external agents directory configured by VIMAI_EXTERNAL_AGENTS_DIR in .env and launches <external-agents-dir>/<name>/run-agent with the prompt passed through a temp prompt file. The external agent's stdout/stderr appears in the existing [AI Response] scratch buffer.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "':AI @<name> <prompt>' remains the single user-facing syntax for prompt-only and external agents",
         "Existing prompt-only agent resolution has priority: ~/.vimai/agents/<name>.md first, then bundled agents such as vi.md",
@@ -263,7 +263,17 @@ interface feature_list {
         "External agent calls do not read from or write to vimai session history",
         "Unit tests cover prompt-agent precedence, .env config loading, wrapper discovery, prompt-file handling, output capture, non-zero exits, and stateless routing"
       ],
-      "evidence": [],
+      "evidence": [
+        "src/vimai/config.py: optional VIMAI_EXTERNAL_AGENTS_DIR is loaded from the existing environment/.env path; load_external_agents_dir() validates fallback config without requiring Azure vars",
+        "src/vimai/agents/external.py: invoke_external_agent() validates agent names, discovers <external-agents-dir>/<name>/run-agent, writes prompts to UTF-8 temp files, invokes wrappers with --prompt-file, captures stdout/stderr, removes temp files, and raises clear errors on missing wrappers or non-zero exits",
+        "src/vimai/cli.py: @<name> routing first resolves prompt-only agents via ~/.vimai/agents and bundled prompts; AgentNotFoundError falls back to external wrappers and skips session history",
+        "src/vimai/chain.py: invoke_loaded_agent() reuses a preloaded prompt-only agent so CLI precedence checks do not load prompt files twice",
+        "tests/test_external_agents.py: wrapper discovery, prompt-file content, output capture, non-zero exits, and missing wrapper errors covered",
+        "tests/test_cli.py: prompt-agent precedence, external fallback, and stateless --session behavior covered",
+        "tests/test_config.py: VIMAI_EXTERNAL_AGENTS_DIR env/.env loading and missing-var errors covered",
+        "README.md and docs/ARCHITECTURE.md: external agent runner setup, contract, precedence, and error behavior documented",
+        "uv run ruff format . && uv run ruff check . && uv run pytest: 112/112 passed"
+      ],
       "notes": "External agents are non-interactive request/response CLIs for v1. The per-agent run-agent wrapper owns venv activation or direct venv Python invocation, so vimai does not guess Python paths, entrypoints, or arguments. Interactive or streaming agents may require Vim jobs/channels later; this feature should first support a simple process contract that writes the final answer to stdout."
     },
     {
