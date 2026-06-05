@@ -12,6 +12,7 @@ from vimai.config import (
     Config,
     ConfigError,
     load_config,
+    load_external_agents_dir,
     _DEFAULT_API_VERSION,
     _DEFAULT_LANGSMITH_PROJECT,
 )
@@ -27,6 +28,7 @@ def isolated_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.delenv("LANGSMITH_TRACING", raising=False)
     monkeypatch.delenv("LANGCHAIN_TRACING_V2", raising=False)
     monkeypatch.delenv("LANGSMITH_PROJECT", raising=False)
+    monkeypatch.delenv("VIMAI_EXTERNAL_AGENTS_DIR", raising=False)
 
 
 class TestLoadConfig:
@@ -190,6 +192,36 @@ class TestLoadConfig:
         assert "LANGCHAIN_TRACING_V2" not in os.environ
         assert "LANGSMITH_PROJECT" not in os.environ
 
+    def test_loads_external_agents_dir_from_env(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        external_agents_dir = tmp_path / "external-agents"
+        monkeypatch.setenv("AZURE_OPENAI_ENDPOINT", "https://my.openai.azure.com/")
+        monkeypatch.setenv("AZURE_OPENAI_DEPLOYMENT", "gpt-4o")
+        monkeypatch.setenv("VIMAI_EXTERNAL_AGENTS_DIR", str(external_agents_dir))
+
+        config = load_config()
+
+        assert config.external_agents_dir == external_agents_dir
+
+    def test_load_external_agents_dir_reads_dotenv(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        external_agents_dir = tmp_path / "external-agents"
+        env_file = tmp_path / ".env"
+        env_file.write_text(
+            f"VIMAI_EXTERNAL_AGENTS_DIR={external_agents_dir}\n", encoding="utf-8"
+        )
+        monkeypatch.setattr("vimai.config._DEFAULT_DOTENV_PATHS", (env_file,))
+
+        assert load_external_agents_dir() == external_agents_dir
+
+    def test_load_external_agents_dir_requires_env_var(self) -> None:
+        with pytest.raises(ConfigError) as exc_info:
+            load_external_agents_dir()
+
+        assert "VIMAI_EXTERNAL_AGENTS_DIR" in str(exc_info.value)
+
 
 class TestConfig:
     def test_dataclass_fields(self) -> None:
@@ -204,3 +236,4 @@ class TestConfig:
         config = Config(endpoint="https://ep.com", deployment="dep")
 
         assert config.api_version == _DEFAULT_API_VERSION
+        assert config.external_agents_dir is None

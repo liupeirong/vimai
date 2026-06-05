@@ -44,7 +44,7 @@ def load_agent(name: str, *, user_agents_dir: Path | str | None = None) -> Agent
         ValueError: If *name* is empty or contains path separators/special chars.
         AgentNotFoundError: If no matching prompt file exists.
     """
-    agent_name = _normalize_agent_name(name)
+    agent_name = normalize_agent_name(name)
     agents_dir = (
         Path(user_agents_dir)
         if user_agents_dir is not None
@@ -74,7 +74,8 @@ def load_agent(name: str, *, user_agents_dir: Path | str | None = None) -> Agent
     )
 
 
-def _normalize_agent_name(name: str) -> str:
+def normalize_agent_name(name: str) -> str:
+    """Return a validated agent name without a leading @."""
     agent_name = name.strip().removeprefix("@")
     if not agent_name:
         raise ValueError("Agent name must not be empty.")

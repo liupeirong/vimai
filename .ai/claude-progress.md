@@ -14,6 +14,24 @@ interface session_log {
 ```json
 [
   {
+    "datetime": "2026-06-05 07:16",
+    "current_feature": "F09 (External agent command runner)",
+    "what_was_done": [
+      "Added optional VIMAI_EXTERNAL_AGENTS_DIR loading through the existing .env/environment path",
+      "Added an external agent runner that discovers <external-agents-dir>/<name>/run-agent wrappers, passes prompts via UTF-8 temp files using --prompt-file, captures stdout/stderr, cleans up temp files, and surfaces missing wrapper or non-zero exit errors",
+      "Changed @<name> CLI routing so prompt-only agents keep priority, missing prompt-only agents fall back to external wrappers, and external calls do not load or modify session history",
+      "Added pytest coverage for prompt-agent precedence, .env config loading, wrapper discovery, prompt-file handling, output capture, non-zero exits, missing wrappers, and stateless external routing",
+      "Updated README.md and docs/ARCHITECTURE.md with the external runner contract and configuration"
+    ],
+    "decision": [
+      "External agents do not require Azure config because they own their own runtime and model access",
+      "Prompt-only agents remain first-class and continue to override external agents with the same name",
+      "External runner v1 remains non-interactive request/response; streaming or Vim jobs/channels are deferred"
+    ],
+    "issues": [],
+    "next_step": "Implement next highest-priority unfinished feature: F10 (Package and distribute the plugin)."
+  },
+  {
     "datetime": "2026-06-04 16:40",
     "current_feature": "F06 (LangSmith tracing when configured)",
     "what_was_done": [

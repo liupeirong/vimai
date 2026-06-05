@@ -17,11 +17,16 @@ src/vimai/
   agents/
     __init__.py
     loader.py       # Loads ~/.vimai/agents/<name>.md as system prompt (F07)
+    external.py     # Runs <VIMAI_EXTERNAL_AGENTS_DIR>/<name>/run-agent wrappers (F09)
   builtin_agents/
     vi.md           # Bundled Vim expert system prompt (F07)
 
 ~/.vimai/agents/
   <name>.md         # User-defined agents; overrides bundled agents by name
+
+<VIMAI_EXTERNAL_AGENTS_DIR>/
+  <name>/
+    run-agent       # External non-interactive agent wrapper; accepts --prompt-file
 
 plugin/
   vimai.vim         # Vim plugin: :AI command, cabbrev, scratch buffer, autocommand (F01,F02,F04,F08)
@@ -44,6 +49,7 @@ tests/
 - **Chain** (`chain.py`): Wraps LangChain `ChatOpenAI`. Accepts a list of session messages + new prompt, returns response string.
 - **CLI** (`cli.py`): Parses `sys.argv`, dispatches to chain or subcommands, prints to stdout (Vim reads this as `:!` output).
 - **Agent loader** (`agents/loader.py`): Loads `~/.vimai/agents/<name>.md` first, then falls back to bundled prompts such as `builtin_agents/vi.md`. Agent calls are stateless single-turn.
+- **External agent runner** (`agents/external.py`): Runs non-interactive `<VIMAI_EXTERNAL_AGENTS_DIR>/<name>/run-agent` wrappers with `--prompt-file <tempfile>` when no prompt-only agent exists.
 
 ## Data Flow
 
@@ -57,7 +63,10 @@ User types: :AI <prompt>
   → Vim: displays stdout in command window (same as :!ls)
 
 User types: :AI @vi <prompt>
-  → F08: Vim/CLI routing detects @vi → invoke_agent("vi", prompt)
+  → F08/F09: Vim/CLI routing detects @vi
+  → prompt-only agent lookup checks ~/.vimai/agents/vi.md, then bundled vi.md
+  → if found: invoke_loaded_agent(config, agent, prompt)
+  → if missing: run <VIMAI_EXTERNAL_AGENTS_DIR>/vi/run-agent --prompt-file <tempfile>
   → no session file modified
 
 User types: :AI /clear
@@ -69,6 +78,7 @@ User types: :AI /clear
 - Missing required env vars → `ConfigError` with exact var name and setup hint, printed to stderr, exit code 1.
 - Azure auth failure → caught at invocation, printed as human-readable message, exit code 1.
 - LLM API error → caught, message printed, exit code 1. Session entry is NOT written on error.
+- External agent failure → non-zero exit or wrapper launch failure is printed as a human-readable vimai error, exit code 1. Session entry is NOT written.
 - Unknown `/command` → print "Unknown command. Run :AI /help for available commands.", exit code 1.
 
 ## Testing Strategy

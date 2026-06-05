@@ -1,4 +1,4 @@
-"""CLI entry point called by Vim via :! shell integration (F01, F03, F04, F08).
+"""CLI entry point called by Vim via :! shell integration (F01, F03, F04, F08, F09).
 
 Usage:
     python main.py '<prompt>'
@@ -20,9 +20,10 @@ import argparse
 import sys
 from pathlib import Path
 
-from .chain import invoke_agent, invoke_chain, invoke_chain_with_history
+from .agents import AgentNotFoundError, invoke_external_agent, load_agent
+from .chain import invoke_chain, invoke_chain_with_history, invoke_loaded_agent
 from .commands import handle_command
-from .config import ConfigError, load_config
+from .config import ConfigError, load_config, load_external_agents_dir
 
 
 def _parse_args() -> argparse.Namespace:
@@ -104,12 +105,22 @@ def main() -> None:
             sys.exit(1)
 
     try:
-        config = load_config()
         if agent_route is not None:
-            response = invoke_agent(config, agent_name, agent_prompt)
+            try:
+                agent = load_agent(agent_name)
+            except AgentNotFoundError:
+                external_agents_dir = load_external_agents_dir()
+                response = invoke_external_agent(
+                    external_agents_dir, agent_name, agent_prompt
+                )
+            else:
+                config = load_config()
+                response = invoke_loaded_agent(config, agent, agent_prompt)
         elif session_path:
+            config = load_config()
             response = invoke_chain_with_history(config, session_path, prompt)
         else:
+            config = load_config()
             response = invoke_chain(config, prompt)
         print(response)
         sys.exit(0)
