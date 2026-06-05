@@ -260,15 +260,16 @@ interface feature_list {
         "External agent calls pass the prompt via a UTF-8 temp file instead of shell-embedding multiline content",
         "stdout and stderr from the external process are captured and displayed in the [AI Response] scratch buffer",
         "Non-zero external process exits produce a clear user-visible error",
+        "External process calls time out after 120 seconds to avoid leaving Vim waiting indefinitely",
         "External agent calls do not read from or write to vimai session history",
         "Unit tests cover prompt-agent precedence, .env config loading, wrapper discovery, prompt-file handling, output capture, non-zero exits, and stateless routing"
       ],
       "evidence": [
         "src/vimai/config.py: optional VIMAI_EXTERNAL_AGENTS_DIR is loaded from the existing environment/.env path; load_external_agents_dir() validates fallback config without requiring Azure vars",
-        "src/vimai/agents/external.py: invoke_external_agent() validates agent names, discovers <external-agents-dir>/<name>/run-agent, or run-agent.bat/run-agent.cmd on Windows, writes prompts to UTF-8 temp files, invokes wrappers with --prompt-file, captures stdout/stderr, removes temp files, and raises clear errors on missing wrappers or non-zero exits",
+        "src/vimai/agents/external.py: invoke_external_agent() validates agent names, discovers <external-agents-dir>/<name>/run-agent, or run-agent.bat/run-agent.cmd on Windows, writes prompts to UTF-8 temp files, invokes wrappers with --prompt-file and a 120-second timeout, captures stdout/stderr, removes temp files, and raises clear errors on missing wrappers, timeouts, or non-zero exits",
         "src/vimai/cli.py: @<name> routing first resolves prompt-only agents via ~/.vimai/agents and bundled prompts; AgentNotFoundError falls back to external wrappers and skips session history",
         "src/vimai/chain.py: invoke_loaded_agent() reuses a preloaded prompt-only agent so CLI precedence checks do not load prompt files twice",
-        "tests/test_external_agents.py: extensionless wrapper discovery, Windows .bat wrapper discovery, extensionless precedence, prompt-file content, output capture, non-zero exits, and missing wrapper errors covered",
+        "tests/test_external_agents.py: extensionless wrapper discovery, Windows .bat wrapper discovery, extensionless precedence, prompt-file content, 120-second timeout handling, output capture, non-zero exits, and missing wrapper errors covered",
         "tests/test_cli.py: prompt-agent precedence, external fallback, and stateless --session behavior covered",
         "tests/test_config.py: VIMAI_EXTERNAL_AGENTS_DIR env/.env loading and missing-var errors covered",
         "README.md and docs/ARCHITECTURE.md: external agent runner setup, contract, precedence, and error behavior documented",

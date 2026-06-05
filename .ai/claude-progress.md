@@ -14,6 +14,21 @@ interface session_log {
 ```json
 [
   {
+    "datetime": "2026-06-05 13:49",
+    "current_feature": "F09 (External agent timeout)",
+    "what_was_done": [
+      "Added a 120-second timeout to external agent subprocess calls",
+      "Converted subprocess TimeoutExpired into a clear vimai external agent error",
+      "Verified prompt temp files are cleaned up when external agents time out",
+      "Updated tests, README.md, docs/ARCHITECTURE.md, and F09 feature evidence"
+    ],
+    "decision": [
+      "External agent wrappers must complete within 120 seconds so Vim is not left waiting indefinitely"
+    ],
+    "issues": [],
+    "next_step": "Implement next highest-priority unfinished feature: F10 (Package and distribute the plugin)."
+  },
+  {
     "datetime": "2026-06-05 13:11",
     "current_feature": "F09 (Windows external agent wrapper fix)",
     "what_was_done": [

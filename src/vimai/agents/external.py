@@ -7,6 +7,8 @@ import tempfile
 
 from .loader import normalize_agent_name
 
+EXTERNAL_AGENT_TIMEOUT_SECONDS = 120
+
 
 class ExternalAgentError(Exception):
     """Raised when an external agent wrapper cannot be run successfully."""
@@ -23,7 +25,8 @@ def invoke_external_agent(
     On Windows, run-agent.bat and run-agent.cmd are also accepted.
 
     The prompt is always written to a UTF-8 temporary file so multiline content
-    is not embedded in shell arguments.
+    is not embedded in shell arguments. External agents must finish within
+    120 seconds so Vim is not left waiting indefinitely.
     """
     normalized_name = normalize_agent_name(agent_name)
     agent_dir = Path(external_agents_dir).expanduser() / normalized_name
@@ -53,7 +56,13 @@ def invoke_external_agent(
             check=False,
             encoding="utf-8",
             text=True,
+            timeout=EXTERNAL_AGENT_TIMEOUT_SECONDS,
         )
+    except subprocess.TimeoutExpired as exc:
+        raise ExternalAgentError(
+            f"External agent @{normalized_name} timed out after "
+            f"{EXTERNAL_AGENT_TIMEOUT_SECONDS} seconds."
+        ) from exc
     except OSError as exc:
         raise ExternalAgentError(
             f"Failed to run external agent @{normalized_name} at {wrapper}: {exc}"

@@ -194,8 +194,9 @@ vimai invokes the wrapper as:
 
 The prompt is written to a UTF-8 temporary file, so multiline prompts are safe.
 The wrapper should write its final answer to stdout; stdout and stderr are shown
-in the existing `[AI Response]` scratch buffer. Non-zero exits are displayed as a
-clear vimai error. Prompt-only agents still take priority, so
+in the existing `[AI Response]` scratch buffer. Non-zero exits and wrappers that
+run longer than 120 seconds are displayed as clear vimai errors. Prompt-only
+agents still take priority, so
 `~/.vimai/agents/git.md` or a bundled `git.md` would be used before the external
 `git/run-agent` wrapper.
 
