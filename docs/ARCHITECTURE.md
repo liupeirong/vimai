@@ -77,33 +77,3 @@ User types: :AI @vi <prompt>
 User types: :AI /clear
   → cli.py: detect /clear → session.clear() → print confirmation
 ```
-
-## Error Handling Conventions
-
-- Missing required env vars → `ConfigError` with exact var name and setup hint, printed to stderr, exit code 1.
-- Azure auth failure → caught at invocation, printed as human-readable message, exit code 1.
-- LLM API error → caught, message printed, exit code 1. Session entry is NOT written on error.
-- External agent failure → non-zero exit, timeout, or wrapper launch failure is printed as a human-readable vimai error, exit code 1. Session entry is NOT written.
-- Unknown `/command` → print "Unknown command. Run :AI /help for available commands.", exit code 1.
-
-## Testing Strategy
-
-- Unit tests: mock `AzureChatOpenAI` and `DefaultAzureCredential` with `pytest-mock`. No network calls.
-- Integration tests: run `python main.py` as subprocess, assert stdout. Still mocked credentials.
-- E2E tests: call real Azure OpenAI. Marked `@pytest.mark.e2e`, skipped unless `RUN_E2E=1` env var is set.
-
-## Observability
-
-- Use OpenTelemetry for logs, metrics, and traces
-
-## Distribution
-
-- The repository is laid out as a standard Vim plugin: `plugin/vimai.vim` is loaded from `runtimepath`, and `doc/vimai.txt` is available to `:helptags`.
-- Standard Vim plugin managers can install the GitHub repo directly. Post-install hooks should run `uv sync` in the checkout so `.venv` exists beside `main.py`.
-- Manual clone and GitHub release archive installs use the same layout; users only need to add the extracted directory to `runtimepath` when no plugin manager manages it.
-- `MANIFEST.in` includes `plugin/`, `doc/`, `docs/`, `README.md`, and `main.py` in source distributions.
-- `pyproject.toml` exposes a `vimai` console script for direct CLI use and package smoke testing.
-
-## Security
-
-> TBD - fill in before implementing

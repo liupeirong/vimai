@@ -1,12 +1,11 @@
 """Environment variable loading and validation for vimai (F05, F06)."""
 
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 from dotenv import load_dotenv
 
-_DEFAULT_API_VERSION = "2024-05-01-preview"
 _DEFAULT_LANGSMITH_PROJECT = "vimai"
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 _DEFAULT_DOTENV_PATHS = (_PROJECT_ROOT / ".env",)
@@ -22,7 +21,7 @@ class Config:
 
     endpoint: str
     deployment: str
-    api_version: str = field(default=_DEFAULT_API_VERSION)
+    api_key: str | None = None
     external_agents_dir: Path | None = None
 
 
@@ -71,11 +70,11 @@ def load_config() -> Config:
     """Load and validate configuration from environment variables.
 
     Required vars:
-        AZURE_OPENAI_ENDPOINT   - Azure OpenAI resource endpoint URL
-        AZURE_OPENAI_DEPLOYMENT - Model deployment name
+        OPENAI_BASE_URL - OpenAI compatible resource endpoint URL
+        OPENAI_MODEL - Model deployment name
 
     Optional vars:
-        AZURE_OPENAI_API_VERSION - API version (default: 2024-05-01-preview)
+        OPENAI_API_KEY           - If not using Entra ID auth
         LANGSMITH_API_KEY        - LangSmith API key for tracing
         LANGSMITH_PROJECT        - LangSmith project name (default: vimai)
         VIMAI_EXTERNAL_AGENTS_DIR - Parent directory for external agent wrappers
@@ -85,14 +84,15 @@ def load_config() -> Config:
     """
     _load_dotenv_files()
 
-    endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT", "").strip()
-    deployment = os.environ.get("AZURE_OPENAI_DEPLOYMENT", "").strip()
+    endpoint = os.environ.get("OPENAI_BASE_URL", "").strip()
+    deployment = os.environ.get("OPENAI_MODEL", "").strip()
+    api_key = os.environ.get("OPENAI_API_KEY", "").strip()
 
     missing = [
         name
         for name, value in [
-            ("AZURE_OPENAI_ENDPOINT", endpoint),
-            ("AZURE_OPENAI_DEPLOYMENT", deployment),
+            ("OPENAI_BASE_URL", endpoint),
+            ("OPENAI_MODEL", deployment),
         ]
         if not value
     ]
@@ -102,15 +102,11 @@ def load_config() -> Config:
             "Set them before running vimai."
         )
 
-    api_version = (
-        os.environ.get("AZURE_OPENAI_API_VERSION", "").strip() or _DEFAULT_API_VERSION
-    )
-
     _configure_langsmith_tracing()
 
     return Config(
         endpoint=endpoint,
         deployment=deployment,
-        api_version=api_version,
+        api_key=api_key,
         external_agents_dir=_external_agents_dir_from_env(),
     )

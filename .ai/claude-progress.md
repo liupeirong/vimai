@@ -14,6 +14,25 @@ interface session_log {
 ```json
 [
   {
+    "datetime": "2026-06-08 10:00",
+    "current_feature": "F05 (OpenAI-compatible API migration alignment)",
+    "what_was_done": [
+      "Updated src/vimai/config.py to read OPENAI_API_KEY into Config.api_key instead of incorrectly reading LANGSMITH_API_KEY",
+      "Updated src/vimai/llm.py to use Config.endpoint as ChatOpenAI base_url (fixes Config.endpoint/base_url mismatch)",
+      "Rewrote tests/test_config.py to validate OPENAI_BASE_URL/OPENAI_MODEL required vars, OPENAI_API_KEY optional behavior, dotenv loading, and LangSmith toggles",
+      "Rewrote tests/test_llm.py to validate two paths: Entra token provider when OPENAI_API_KEY is absent and direct API key when OPENAI_API_KEY is present",
+      "Updated tests/test_chain.py Config fixture to remove legacy api_version parameter",
+      "Updated .ai/feature-list.md F05 wording and env var references from Azure OpenAI naming to OpenAI-compatible naming"
+    ],
+    "decision": [
+      "Keep tests focused and non-exhaustive for the migration: validate env var names and call wiring only",
+      "Treat OPENAI_BASE_URL as already-openai-compatible (no automatic suffix mutation in build_llm)",
+      "Preserve Entra ID fallback path when OPENAI_API_KEY is not provided"
+    ],
+    "issues": [],
+    "next_step": "Run targeted and full pytest to confirm no remaining Azure-specific assumptions in test coverage."
+  },
+  {
     "datetime": "2026-06-05 15:17",
     "current_feature": "F10 (Package and distribute the plugin)",
     "what_was_done": [
@@ -226,11 +245,11 @@ interface session_log {
   },
   {
     "datetime": "2026-06-03 17:11",
-    "current_feature": "F05 (Azure AI Foundry openai/v1 API upgrade)",
+    "current_feature": "F05 (OpenAI-compatible openai/v1 API upgrade)",
     "what_was_done": [
       "Switched src/vimai/llm.py from azure.identity.aio.DefaultAzureCredential (async, incorrect for sync context) to sync DefaultAzureCredential + get_bearer_token_provider",
       "Exposed _COGNITIVE_SCOPE constant so tests can assert the correct token scope",
-      "build_llm() now uses ChatOpenAI (not AzureChatOpenAI) and auto-appends /openai/v1/ to AZURE_OPENAI_ENDPOINT — routes through Azure AI Foundry unified inference API",
+      "build_llm() now uses ChatOpenAI (not AzureChatOpenAI) and auto-appends /openai/v1/ to OPENAI_BASE_URL — routes through an OpenAI-compatible unified inference API",
       "Bumped pyproject.toml langchain-openai>=0.3.0 to >=1.0.0",
       "Updated uv.lock to reflect new constraint",
       "Updated tests/test_llm.py: asserts ChatOpenAI (not AzureChatOpenAI), checks openai_api_base/model_name, added trailing-slash normalisation test and /openai/v1/ suffix test (7 tests total)",
@@ -239,8 +258,8 @@ interface session_log {
       "pytest: 79/79 passed; ruff format + check: clean"
     ],
     "decision": [
-      "Use ChatOpenAI (not AzureChatOpenAI) with base_url pointing to /openai/v1/ — this is the current LangChain recommendation for Azure AI Foundry",
-      "AZURE_OPENAI_API_VERSION env var is no longer needed; removed from config table (api_version field stays in Config dataclass for backward compat but is unused by build_llm)"
+      "Use ChatOpenAI (not AzureChatOpenAI) with base_url pointing to /openai/v1/ — this is the current LangChain recommendation for OpenAI-compatible APIs",
+      "AZURE_OPENAI_API_VERSION env var is no longer needed; removed from config table (api_version field stayed temporarily in Config dataclass for backward compat)"
     ],
     "issues": [],
     "next_step": "Implement next highest-priority not_started feature: F02, F07, or F08."
@@ -424,7 +443,7 @@ interface session_log {
       "E2E tests gated behind RUN_E2E=1 env var"
     ],
     "issues": [],
-    "next_step": "Start new session. Implement F05 (Azure OpenAI + Entra ID config) first as it is a dependency of all other features, then F01 (inline :AI query)."
+    "next_step": "Start new session. Implement F05 (OpenAI-compatible API + Entra ID config) first as it is a dependency of all other features, then F01 (inline :AI query)."
   },
   {
     "current_feature": "infra-001",

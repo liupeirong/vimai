@@ -9,15 +9,11 @@ _COGNITIVE_SCOPE = "https://cognitiveservices.azure.com/.default"
 
 
 def build_llm(config: Config) -> ChatOpenAI:
-    """Create a ChatOpenAI instance for Azure AI Foundry's openai/v1 API.
+    """Create a ChatOpenAI instance for OpenAI compatible API.
 
-    Uses DefaultAzureCredential + get_bearer_token_provider so any standard
-    Azure auth method works (az login, managed identity, environment
-    credentials, etc.). No API key is required.
-
-    The base URL is constructed as ``{endpoint}/openai/v1/``, which routes
-    requests through the Azure AI Foundry unified endpoint and supports all
-    deployed models (OpenAI, Llama, DeepSeek, Mistral, Phi, etc.).
+    If api key is not provided, uses DefaultAzureCredential + get_bearer_token_provider
+      so any standard Azure auth method works (az login, managed identity, environment
+    credentials, etc.).
 
     Args:
         config: Validated configuration from load_config().
@@ -25,11 +21,14 @@ def build_llm(config: Config) -> ChatOpenAI:
     Returns:
         A configured ChatOpenAI instance ready for invocation.
     """
-    credential = DefaultAzureCredential()
-    token_provider = get_bearer_token_provider(credential, _COGNITIVE_SCOPE)
-    base_url = config.endpoint.rstrip("/") + "/openai/v1/"
+    if not config.api_key:
+        credential = DefaultAzureCredential()
+        api_key = get_bearer_token_provider(credential, _COGNITIVE_SCOPE)
+    else:
+        api_key = config.api_key
+
     return ChatOpenAI(
-        base_url=base_url,
+        base_url=config.endpoint,
         model=config.deployment,
-        api_key=token_provider,
+        api_key=api_key,
     )

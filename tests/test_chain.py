@@ -15,9 +15,8 @@ from vimai.config import Config
 @pytest.fixture()
 def config() -> Config:
     return Config(
-        endpoint="https://my.openai.azure.com/",
+        endpoint="https://my.openai.azure.com/openai/v1",
         deployment="gpt-4o",
-        api_version="2024-05-01-preview",
     )
 
 

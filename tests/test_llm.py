@@ -9,109 +9,65 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from vimai.config import Config
-from vimai.llm import build_llm, _COGNITIVE_SCOPE
+from vimai.llm import _COGNITIVE_SCOPE, build_llm
 
 
 @pytest.fixture()
-def config() -> Config:
+def config_without_api_key() -> Config:
     return Config(
-        endpoint="https://my.openai.azure.com/",
+        endpoint="https://my.openai.azure.com/openai/v1",
         deployment="gpt-4o",
+        api_key=None,
+    )
+
+
+@pytest.fixture()
+def config_with_api_key() -> Config:
+    return Config(
+        endpoint="https://my.openai.azure.com/openai/v1",
+        deployment="gpt-4o",
+        api_key="sk-test", # pragma: allowlist secret
     )
 
 
 class TestBuildLlm:
-    def test_returns_chat_openai(self, config: Config) -> None:
-        from langchain_openai import AzureChatOpenAI, ChatOpenAI
-
+    def test_uses_entra_token_provider_without_api_key(
+        self, config_without_api_key: Config
+    ) -> None:
+        mock_credential = MagicMock()
         mock_token_provider = MagicMock()
-
-        with (
-            patch("vimai.llm.DefaultAzureCredential", return_value=MagicMock()),
-            patch(
-                "vimai.llm.get_bearer_token_provider",
-                return_value=mock_token_provider,
-            ),
-        ):
-            llm = build_llm(config)
-
-        assert isinstance(llm, ChatOpenAI)
-        assert not isinstance(llm, AzureChatOpenAI)
-
-    def test_uses_default_azure_credential(self, config: Config) -> None:
-        mock_credential = MagicMock()
-
-        with (
-            patch(
-                "vimai.llm.DefaultAzureCredential", return_value=mock_credential
-            ) as mock_cls,
-            patch("vimai.llm.get_bearer_token_provider", return_value=MagicMock()),
-        ):
-            build_llm(config)
-
-        mock_cls.assert_called_once_with()
-
-    def test_requests_cognitive_scope(self, config: Config) -> None:
-        mock_credential = MagicMock()
 
         with (
             patch("vimai.llm.DefaultAzureCredential", return_value=mock_credential),
             patch(
-                "vimai.llm.get_bearer_token_provider", return_value=MagicMock()
-            ) as mock_gbt,
+                "vimai.llm.get_bearer_token_provider",
+                return_value=mock_token_provider,
+            ) as mock_get_provider,
+            patch("vimai.llm.ChatOpenAI", return_value=MagicMock()) as mock_chat,
         ):
-            build_llm(config)
+            build_llm(config_without_api_key)
 
-        mock_gbt.assert_called_once_with(mock_credential, _COGNITIVE_SCOPE)
+        mock_get_provider.assert_called_once_with(mock_credential, _COGNITIVE_SCOPE)
+        mock_chat.assert_called_once_with(
+            base_url="https://my.openai.azure.com/openai/v1",
+            model="gpt-4o",
+            api_key=mock_token_provider,
+        )
 
-    def test_passes_config_values_to_llm(self, config: Config) -> None:
-        mock_token_provider = MagicMock()
-
+    def test_uses_openai_api_key_when_provided(
+        self, config_with_api_key: Config
+    ) -> None:
         with (
-            patch("vimai.llm.DefaultAzureCredential", return_value=MagicMock()),
-            patch(
-                "vimai.llm.get_bearer_token_provider", return_value=mock_token_provider
-            ),
+            patch("vimai.llm.DefaultAzureCredential") as mock_credential_cls,
+            patch("vimai.llm.get_bearer_token_provider") as mock_get_provider,
+            patch("vimai.llm.ChatOpenAI", return_value=MagicMock()) as mock_chat,
         ):
-            llm = build_llm(config)
+            build_llm(config_with_api_key)
 
-        expected_base_url = config.endpoint.rstrip("/") + "/openai/v1/"
-        assert llm.openai_api_base == expected_base_url
-        assert llm.model_name == config.deployment
-
-    def test_no_api_key_used(self, config: Config) -> None:
-        with (
-            patch("vimai.llm.DefaultAzureCredential", return_value=MagicMock()),
-            patch("vimai.llm.get_bearer_token_provider", return_value=MagicMock()),
-        ):
-            llm = build_llm(config)
-
-        # api_key should not be set to a real secret value
-        api_key_value = llm.openai_api_key
-        secret_value = api_key_value.get_secret_value() if api_key_value else None
-        assert secret_value != "some-secret-key"
-
-    def test_base_url_has_v1_suffix(self, config: Config) -> None:
-        with (
-            patch("vimai.llm.DefaultAzureCredential", return_value=MagicMock()),
-            patch("vimai.llm.get_bearer_token_provider", return_value=MagicMock()),
-        ):
-            llm = build_llm(config)
-
-        assert llm.openai_api_base is not None
-        assert "/openai/v1/" in llm.openai_api_base
-
-    def test_base_url_normalises_trailing_slash(self) -> None:
-        """Endpoint with or without trailing slash both produce /openai/v1/ suffix."""
-        with (
-            patch("vimai.llm.DefaultAzureCredential", return_value=MagicMock()),
-            patch("vimai.llm.get_bearer_token_provider", return_value=MagicMock()),
-        ):
-            llm_with = build_llm(
-                Config(endpoint="https://my.openai.azure.com/", deployment="m")
-            )
-            llm_without = build_llm(
-                Config(endpoint="https://my.openai.azure.com", deployment="m")
-            )
-
-        assert llm_with.openai_api_base == llm_without.openai_api_base
+        mock_credential_cls.assert_not_called()
+        mock_get_provider.assert_not_called()
+        mock_chat.assert_called_once_with(
+            base_url="https://my.openai.azure.com/openai/v1",
+            model="gpt-4o",
+            api_key="sk-test", # pragma: allowlist secret
+        )

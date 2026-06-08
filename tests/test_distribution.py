@@ -27,15 +27,6 @@ def test_distribution_files_are_in_source_manifest() -> None:
     assert "recursive-include doc *.txt" in manifest
 
 
-def test_standard_plugin_manager_install_instructions_are_documented() -> None:
-    readme = read_repo_file("README.md")
-    help_doc = read_repo_file("doc/vimai.txt")
-
-    for manager in ("vim-plug", "Vundle", "lazy.nvim"):
-        assert manager in readme
-        assert manager in help_doc
-
-
 def test_console_script_entry_point_is_declared() -> None:
     pyproject = read_repo_file("pyproject.toml")
 

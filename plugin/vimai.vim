@@ -10,7 +10,7 @@
 " Requirements:
 "   Run `uv sync` in the plugin checkout. vimai uses .venv automatically when
 "   present; set g:vimai_python or VIMAI_PYTHON to override the Python path.
-"   AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_DEPLOYMENT must be set.
+"   OPENAI_BASE_URL and OPENAI_MODEL must be set.
 
 if exists('g:loaded_vimai')
   finish
