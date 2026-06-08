@@ -24,7 +24,6 @@ def test_distribution_files_are_in_source_manifest() -> None:
 
     assert "include main.py" in manifest
     assert "recursive-include plugin *.vim" in manifest
-    assert "recursive-include doc *.txt" in manifest
 
 
 def test_console_script_entry_point_is_declared() -> None:

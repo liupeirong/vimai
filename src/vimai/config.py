@@ -86,7 +86,7 @@ def load_config() -> Config:
 
     endpoint = os.environ.get("OPENAI_BASE_URL", "").strip()
     deployment = os.environ.get("OPENAI_MODEL", "").strip()
-    api_key = os.environ.get("OPENAI_API_KEY", "").strip()
+    api_key = os.environ.get("OPENAI_API_KEY", "").strip() or None
 
     missing = [
         name
