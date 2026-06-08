@@ -120,7 +120,9 @@ class TestLoadConfig:
     def test_enables_langsmith_tracing(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_BASE_URL", "https://my.openai.azure.com/openai/v1")
         monkeypatch.setenv("OPENAI_MODEL", "gpt-4o")
-        monkeypatch.setenv("LANGSMITH_API_KEY", "lsv2_test_key")  # pragma: allowlist secret
+        monkeypatch.setenv(
+            "LANGSMITH_API_KEY", "lsv2_test_key"
+        )  # pragma: allowlist secret
         monkeypatch.setenv("LANGSMITH_TRACING", "false")
         monkeypatch.setenv("LANGCHAIN_TRACING_V2", "false")
 
@@ -179,7 +181,7 @@ class TestConfig:
 
         assert config.endpoint == "https://ep.com"
         assert config.deployment == "dep"
-        assert config.api_key == "sk" # pragma: allowlist secret
+        assert config.api_key == "sk"  # pragma: allowlist secret
         assert config.external_agents_dir is None
 
     def test_api_key_optional(self) -> None:
