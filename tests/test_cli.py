@@ -66,7 +66,7 @@ class TestCliMain:
         with (
             patch(
                 "vimai.cli.load_config",
-                side_effect=ConfigError("Missing AZURE_OPENAI_ENDPOINT"),
+                side_effect=ConfigError("Missing OPENAI_BASE_URL"),
             ),
             pytest.raises(SystemExit) as exc_info,
         ):

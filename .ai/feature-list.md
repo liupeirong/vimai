@@ -24,7 +24,7 @@ interface feature_list {
 
 ```json
 {
-  "last_updated": "2026-06-05 15:55",
+  "last_updated": "2026-06-08 10:00",
   "feature": [
     {
       "id": "infra-001",
@@ -152,24 +152,24 @@ interface feature_list {
       "id": "F05",
       "priority": 1,
       "area": "llm integration",
-      "title": "Azure OpenAI + Entra ID authentication",
-      "user_visible_behavior": "Plugin connects to Azure OpenAI using Entra ID. No API key required.",
+      "title": "OpenAI-compatible API + Entra ID authentication",
+      "user_visible_behavior": "Plugin connects to an OpenAI-compatible endpoint using Entra ID when no API key is provided.",
       "status": "passing",
       "verification": [
         "Auth uses DefaultAzureCredential (az login, managed identity, etc.)",
-        "Required env vars: AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_DEPLOYMENT",
-        "Optional: AZURE_OPENAI_API_VERSION",
+        "Required env vars: OPENAI_BASE_URL, OPENAI_MODEL",
+        "Optional: OPENAI_API_KEY",
         "Missing required vars produce a clear error message",
         "No secrets in source code"
       ],
       "evidence": [
         "src/vimai/config.py: Config dataclass + ConfigError + load_config() implemented",
-        "src/vimai/llm.py: build_llm() uses sync DefaultAzureCredential + get_bearer_token_provider; ChatOpenAI with base_url set to {endpoint}/openai/v1/ for Azure AI Foundry unified inference API",
-        "tests/test_config.py: 11 unit tests covering all env var cases, whitespace, defaults",
-        "tests/test_llm.py: 7 unit tests with mocked credentials — assert ChatOpenAI type, correct base_url/model, cognitive scope, trailing-slash normalisation",
+        "src/vimai/llm.py: build_llm() uses sync DefaultAzureCredential + get_bearer_token_provider when OPENAI_API_KEY is absent; ChatOpenAI uses OPENAI_BASE_URL and OPENAI_MODEL",
+        "tests/test_config.py: OpenAI env var loading, .env loading, optional OPENAI_API_KEY, and LangSmith tracing behavior covered",
+        "tests/test_llm.py: verifies Entra token-provider flow without OPENAI_API_KEY and direct API key flow when OPENAI_API_KEY is set",
         "pytest: 79/79 passed; ruff format + check: clean"
       ],
-      "notes": "Uses ChatOpenAI (not AzureChatOpenAI) per LangChain recommendation for Azure AI Foundry openai/v1 API. AZURE_OPENAI_API_VERSION is no longer required; endpoint + deployment are the only required vars."
+      "notes": "Uses ChatOpenAI against an OpenAI-compatible API. Entra ID is used via DefaultAzureCredential when OPENAI_API_KEY is not provided."
     },
     {
       "id": "F06",
