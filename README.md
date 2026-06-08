@@ -55,7 +55,7 @@ If you need to use a different Python, set one of these before the plugin loads:
 
 ```vim
 " In vimrc
-let g:vimai_python = '/absolute/path/to/python'
+let g:vimai_python="/absolute/path/to/python"
 ```
 
 ### Step 6 — Optional; Authenticate if you use Entra ID to access the LLM
