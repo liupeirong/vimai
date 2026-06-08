@@ -26,7 +26,7 @@ def config_with_api_key() -> Config:
     return Config(
         endpoint="https://my.openai.azure.com/openai/v1",
         deployment="gpt-4o",
-        api_key="sk-test", # pragma: allowlist secret
+        api_key="sk-test",  # pragma: allowlist secret
     )
 
 
@@ -69,5 +69,5 @@ class TestBuildLlm:
         mock_chat.assert_called_once_with(
             base_url="https://my.openai.azure.com/openai/v1",
             model="gpt-4o",
-            api_key="sk-test", # pragma: allowlist secret
+            api_key="sk-test",  # pragma: allowlist secret
         )
