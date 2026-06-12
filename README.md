@@ -215,6 +215,10 @@ from the plugin checkout root.
 git clone https://github.com/liupeirong/vimai.git
 cd vimai
 uv sync
+# on Windows
+uv pip install -e . --no-build-isolation
+# on Linux
+uv pip install -e .
 ```
 
 ### Running tests

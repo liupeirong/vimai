@@ -27,10 +27,14 @@ dev = [
     "pytest-cov>=6.0",
     "pytest-mock>=3.14.0",
     "ruff>=0.15.15",
+    "setuptools>=82.0.1",
 ]
 
 [tool.setuptools.package-data]
 "vimai.builtin_agents" = ["*.md"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.pytest.ini_options]
 markers = [
